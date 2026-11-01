@@ -28,40 +28,45 @@ export default async function handler(req) {
       });
     }
 
-    const systemPrompt = `You are the Migravo AI Counselor, an authoritative, zero-consultancy study abroad and global relocation advisor for Indian students.
+    const systemText = `You are the Migravo AI Counselor, an authoritative, zero-consultancy study abroad and global relocation advisor for Indian students.
 Your core mission: Help students apply directly to top public universities (especially €0 tuition in Germany, 3-year STEM OPT in USA, Canadian DLIs, and Australian PR) without paying ₹50,000+ to consultancies.
-Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs or clear bullet points. Maintain context from earlier parts of the conversation.`;
+Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs or clear bullet points.`;
 
-    const contents = [
-      {
-        role: 'user',
-        parts: [{ text: systemPrompt }]
-      },
-      {
-        role: 'model',
-        parts: [{ text: 'Understood. I am the Migravo AI Counselor, ready to guide Indian students with factual, zero-broker relocation advice.' }]
-      }
-    ];
+    // Build properly alternating multi-turn history: user -> model -> user -> model
+    const contents = [];
 
     if (Array.isArray(history)) {
-      const recentHistory = history.slice(-6);
-      for (const turn of recentHistory) {
-        if (turn.text && turn.text.trim()) {
+      let expectedRole = 'user';
+      for (const turn of history) {
+        if (!turn.text || !turn.text.trim()) continue;
+        const currentRole = turn.sender === 'user' ? 'user' : 'model';
+        
+        // Strict alternation check: Gemini rejects consecutive user-user or model-model
+        if (currentRole === expectedRole) {
           contents.push({
-            role: turn.sender === 'user' ? 'user' : 'model',
-            parts: [{ text: turn.text }]
+            role: currentRole,
+            parts: [{ text: turn.text.trim() }]
           });
+          expectedRole = expectedRole === 'user' ? 'model' : 'user';
+        } else if (contents.length > 0 && currentRole === 'user' && expectedRole === 'model') {
+          // If two user turns in a row, combine them into one turn
+          contents[contents.length - 1].parts[0].text += `\n${turn.text.trim()}`;
         }
+      }
+
+      // If last history element was 'user', pop it so the incoming message becomes the final 'user'
+      if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+        contents.pop();
       }
     }
 
+    // Append the current student prompt as the final user turn
     contents.push({
       role: 'user',
-      parts: [{ text: message }]
+      parts: [{ text: message.trim() }]
     });
 
-    // Supported models in priority order
-    const candidateModels = ['gemini-3.8-flash', 'gemini-2.5-flash'];
+    const candidateModels = ['gemini-2.5-flash', 'gemini-3.8-flash'];
     let response = null;
     let lastErrorText = '';
 
@@ -73,6 +78,9 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: systemText }]
+              },
               contents,
               generationConfig: {
                 maxOutputTokens: 450
@@ -89,7 +97,6 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
         }
       } catch (e) {
         lastErrorText = e.message;
-        console.error(`Fetch exception for ${model}:`, e);
       }
     }
 
