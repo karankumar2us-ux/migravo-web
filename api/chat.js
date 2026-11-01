@@ -33,7 +33,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
 
     const contents = [];
 
-    // Strictly alternate turns: user -> model -> user -> model
+    // Strictly alternate roles: user -> model -> user -> model
     if (Array.isArray(history)) {
       let expectedRole = 'user';
       for (const turn of history.slice(-4)) {
@@ -61,10 +61,10 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
       parts: [{ text: message.trim() }],
     });
 
+    // Extended 25s timeout to allow full edge-to-cluster handshake
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 9000);
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-    // Call active model: gemini-3.8-flash
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
       {
@@ -77,7 +77,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
           },
           contents,
           generationConfig: {
-            maxOutputTokens: 350,
+            maxOutputTokens: 400,
           },
         }),
       }
@@ -109,7 +109,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
                 controller.enqueue(encoder.encode(token));
               }
             } catch {
-              // Ignore partial frames
+              // Ignore incomplete frame chunks
             }
           }
         }
@@ -127,7 +127,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
     return new Response(
       JSON.stringify({
         error: isTimeout
-          ? 'Upstream connection timed out after 9s. Please try again.'
+          ? 'Connection took longer than 25s. Google API is experiencing latency.'
           : err.message || 'Internal server error',
       }),
       {
