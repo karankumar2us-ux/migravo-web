@@ -8,8 +8,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
-import LoanCalculator from './components/LoanCalculator';
-import ApsVault from './components/ApsVault';
+import LoanCalculator from './src/components/LoanCalculator';
+import ApsVault from './src/components/ApsVault';
 
 // Curated public university program directory (€0 tuition, English-taught)
 const UNIVERSITY_PROGRAMS = [
