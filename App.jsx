@@ -4,8 +4,12 @@ import {
   ExternalLink, Layers, CheckCircle2, 
   Share2, Globe2, X, Landmark, ArrowUpRight, Zap,
   GraduationCap, Search, BookOpen, Download, Printer,
-  Headphones, MessageCircle, Mail, HelpCircle, PhoneCall
+  Headphones, MessageCircle, Mail, HelpCircle, PhoneCall,
+  ShieldCheck
 } from 'lucide-react';
+
+import LoanCalculator from './components/LoanCalculator';
+import ApsVault from './components/ApsVault';
 
 // Curated public university program directory (€0 tuition, English-taught)
 const UNIVERSITY_PROGRAMS = [
@@ -381,6 +385,8 @@ export default function App() {
                 { id: 'pathways', label: 'Country Pathways', icon: Globe2 },
                 { id: 'unifinder', label: '€0 Universities', icon: GraduationCap },
                 { id: 'chancenkarte', label: 'Germany Chancenkarte (6 Pts)', icon: Award },
+                { id: 'loans', label: 'Loan & Tax Calculator', icon: Landmark },
+                { id: 'aps', label: 'German APS Vault', icon: ShieldCheck },
                 { id: 'scholarships', label: 'Govt Scholarships', icon: Layers },
                 { id: 'checklist', label: 'Relocation Roadmap', icon: CheckSquare },
                 { id: 'support', label: 'Student Support Desk', icon: Headphones },
@@ -885,7 +891,13 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: SCHOLARSHIPS */}
+        {/* TAB 4: ISOLATED LOAN & TAX CALCULATOR COMPONENT */}
+        {activeTab === 'loans' && <LoanCalculator />}
+
+        {/* TAB 5: ISOLATED GERMAN APS VAULT COMPONENT */}
+        {activeTab === 'aps' && <ApsVault />}
+
+        {/* TAB 6: SCHOLARSHIPS */}
         {activeTab === 'scholarships' && (
           <div className="space-y-4">
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
@@ -927,7 +939,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: RELOCATION ROADMAP */}
+        {/* TAB 7: RELOCATION ROADMAP */}
         {activeTab === 'checklist' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-2">
@@ -972,7 +984,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 6: DEDICATED STUDENT SUPPORT DESK */}
+        {/* TAB 8: DEDICATED STUDENT SUPPORT DESK */}
         {activeTab === 'support' && (
           <div className="space-y-6">
             <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-6">
