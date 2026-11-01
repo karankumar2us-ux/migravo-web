@@ -6,7 +6,7 @@ import {
   Search, BookOpen, Download, Printer,
   Headphones, MessageCircle, Mail, HelpCircle,
   ShieldCheck, ArrowRight, DollarSign, Calendar, FileEdit,
-  ChevronLeft, ChevronRight, GraduationCap
+  ChevronLeft, ChevronRight, GraduationCap, Award
 } from 'lucide-react';
 
 import LoanCalculator from './src/components/LoanCalculator';
@@ -14,6 +14,7 @@ import GlobalVerificationVault from './src/components/GlobalVerificationVault';
 import SopBuilder from './src/components/SopBuilder';
 import VisaSlotTracker from './src/components/VisaSlotTracker';
 import CostOfLivingMatcher from './src/components/CostOfLivingMatcher';
+import ScholarshipMatcher from './src/components/ScholarshipMatcher';
 
 // Comprehensive Global Destination Database
 const DESTINATIONS = [
@@ -211,7 +212,7 @@ const DESTINATIONS = [
   }
 ];
 
-// Expanded Global University Directory across Germany, USA, Canada, UK, and Ireland
+// Curated Public University Directory
 const GLOBAL_UNIVERSITIES = [
   // Germany (€0 Tuition Public)
   { id: 1, country: 'Germany', flag: '🇩🇪', name: 'Technical University of Munich (TUM)', program: 'M.Sc. Informatics / Computer Science', degree: 'Masters', discipline: 'CS & AI', tuition: '€0 (Semester fee ~€150)', deadline: '31 May', url: 'https://www.tum.de' },
@@ -361,6 +362,7 @@ export default function App() {
     { id: 'pathways', label: '🌍 Global Pathways', icon: Globe2 },
     { id: 'loans', label: '💰 Education Loan & 80E', icon: Landmark },
     { id: 'aps', label: '🛡️ Credential Vault (APS/WES)', icon: ShieldCheck },
+    { id: 'scholarships', label: '📜 58+ Govt Scholarships', icon: Award },
     { id: 'unifinder', label: '🎓 Global University Finder', icon: GraduationCap },
     { id: 'sop', label: '✍️ SOP & LOR Builder', icon: FileEdit },
     { id: 'visa', label: '📅 Visa & VFS Tracker', icon: Calendar },
@@ -470,7 +472,7 @@ export default function App() {
               Global Study & Relocation Pathways.
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-              Standardized criteria across top study destinations. Prepare your application dossier, financial verification, and visa filings without broker markups.
+              Standardized criteria across top destinations. Prepare your application dossier, financial verification, and visa filings without broker markups.
             </p>
           </div>
 
@@ -677,7 +679,10 @@ export default function App() {
         {/* TAB 3: CREDENTIAL & APS VAULT */}
         {activeTab === 'aps' && <GlobalVerificationVault />}
 
-        {/* TAB 4: GLOBAL PUBLIC UNIVERSITY DIRECTORY */}
+        {/* TAB 4: 58+ FULLY FUNDED SCHOLARSHIPS ENGINE */}
+        {activeTab === 'scholarships' && <ScholarshipMatcher />}
+
+        {/* TAB 5: GLOBAL PUBLIC UNIVERSITY DIRECTORY */}
         {activeTab === 'unifinder' && (
           <div className="space-y-5">
             <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
@@ -761,16 +766,16 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: SOP & LOR BUILDER */}
+        {/* TAB 6: SOP & LOR BUILDER */}
         {activeTab === 'sop' && <SopBuilder />}
 
-        {/* TAB 6: VISA & VFS SLOT TRACKER */}
+        {/* TAB 7: VISA & VFS SLOT TRACKER */}
         {activeTab === 'visa' && <VisaSlotTracker />}
 
-        {/* TAB 7: CITY COST & EARNING MATCHER */}
+        {/* TAB 8: CITY COST & EARNING MATCHER */}
         {activeTab === 'living' && <CostOfLivingMatcher />}
 
-        {/* TAB 8: RELOCATION ROADMAP */}
+        {/* TAB 9: RELOCATION ROADMAP */}
         {activeTab === 'checklist' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-2">
@@ -815,7 +820,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 9: STUDENT SUPPORT DESK */}
+        {/* TAB 10: STUDENT SUPPORT DESK */}
         {activeTab === 'support' && (
           <div className="space-y-6">
             <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-6">
