@@ -257,8 +257,7 @@ export default function App() {
     const query = text || inputMsg;
     if (!query.trim() || isLoadingAi) return;
 
-    // Snapshot current conversation history to pass for context memory
-    const historySnapshot = messages.slice(1); // skip initial greeting
+    const historySnapshot = messages.slice(1);
 
     setMessages(prev => [
       ...prev, 
@@ -433,7 +432,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans antialiased pb-24 selection:bg-[#008779] selection:text-white">
-      {/* Sticky Header */}
+      {/* Sticky Header with Permanent AI Advisor Access */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -451,6 +450,19 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Always visible direct shortcut button to AI Advisor */}
+            <button 
+              onClick={() => setActiveTab('advisor')}
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition active:scale-95 ${
+                activeTab === 'advisor'
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                  : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+              }`}
+            >
+              <Sparkles size={14} className="text-[#E5A93C]" />
+              <span>AI Advisor</span>
+            </button>
+
             <button 
               onClick={handleDownloadPDF}
               className="hidden md:flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 transition"
@@ -459,10 +471,7 @@ export default function App() {
               <Download size={13} className="text-[#008779]" />
               <span>Export PDF</span>
             </button>
-            <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 px-3 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-700">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Readiness: {readinessPercent}%
-            </div>
+
             <button 
               onClick={() => setShowShareModal(true)}
               className="bg-[#0D3B43] hover:bg-[#09262C] text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-sm transition active:scale-95"
@@ -473,33 +482,37 @@ export default function App() {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="max-w-6xl mx-auto px-4 flex gap-1.5 overflow-x-auto py-2.5 no-scrollbar border-t border-slate-100">
-          {[
-            { id: 'pathways', label: 'Country Pathways', icon: Globe2 },
-            { id: 'unifinder', label: '€0 Universities', icon: GraduationCap },
-            { id: 'chancenkarte', label: 'Germany Chancenkarte (6 Pts)', icon: Award },
-            { id: 'scholarships', label: 'Govt Scholarships', icon: Layers },
-            { id: 'checklist', label: 'Relocation Roadmap', icon: CheckSquare },
-            { id: 'advisor', label: 'AI Advisor (Gemini Live)', icon: MessageSquareCode },
-          ].map(tab => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                  active 
-                    ? 'bg-[#0D3B43] text-white shadow-md shadow-[#0D3B43]/20 scale-[1.02]' 
-                    : 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
-                }`}
-              >
-                <Icon size={14} className={active ? 'text-[#E5A93C]' : 'text-slate-400'} />
-                {tab.label}
-              </button>
-            );
-          })}
+        {/* Navigation Tabs with Smooth Horizontal Overflow */}
+        <div className="border-t border-slate-100 bg-white">
+          <div className="max-w-6xl mx-auto px-4 flex items-center">
+            <div className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth">
+              {[
+                { id: 'pathways', label: 'Country Pathways', icon: Globe2 },
+                { id: 'unifinder', label: '€0 Universities', icon: GraduationCap },
+                { id: 'chancenkarte', label: 'Germany Chancenkarte (6 Pts)', icon: Award },
+                { id: 'scholarships', label: 'Govt Scholarships', icon: Layers },
+                { id: 'checklist', label: 'Relocation Roadmap', icon: CheckSquare },
+                { id: 'advisor', label: 'AI Advisor (Gemini Live)', icon: MessageSquareCode },
+              ].map(tab => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all duration-200 ${
+                      active 
+                        ? 'bg-[#0D3B43] text-white shadow-md shadow-[#0D3B43]/20 scale-[1.02]' 
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60'
+                    }`}
+                  >
+                    <Icon size={14} className={active ? 'text-[#E5A93C]' : 'text-slate-400'} />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </header>
 
