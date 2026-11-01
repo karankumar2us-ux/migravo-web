@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { 
   Compass, Award, CheckSquare, MessageSquareCode, 
   ExternalLink, Sparkles, Send, Layers, CheckCircle2, 
-  Share2, Globe2, X, Landmark, ArrowUpRight,
-  Zap
+  Share2, Globe2, X, Landmark, ArrowUpRight, Zap, Loader2
 } from 'lucide-react';
 
 export default function App() {
@@ -60,37 +59,48 @@ export default function App() {
 
   const ckTotal = calculateChancenkartePoints();
 
-  // AI Counselor
+  // AI Counselor State & Dynamic API Handler
   const [messages, setMessages] = useState([
-    { sender: 'ai', text: 'Namaste! I am your Migravo counselor. Ask me anything about €0 German university tuition, US 36-month STEM OPT, loan sanctions, or passport surrender rules.' }
+    { 
+      sender: 'ai', 
+      text: 'Namaste! I am your Migravo AI Counselor powered by Gemini. Ask me anything about €0 German university tuition, APS requirements, 36-month STEM OPT in the US, SBI education loans, or passport surrender rules.' 
+    }
   ]);
   const [inputMsg, setInputMsg] = useState('');
+  const [isLoadingAi, setIsLoadingAi] = useState(false);
 
-  const sendQuery = (text) => {
+  const sendQuery = async (text) => {
     const query = text || inputMsg;
-    if (!query.trim()) return;
+    if (!query.trim() || isLoadingAi) return;
 
     setMessages(prev => [...prev, { sender: 'user', text: query }]);
     setInputMsg('');
+    setIsLoadingAi(true);
 
-    setTimeout(() => {
-      let reply = "Our counselors recommend focusing on target PR pathways matching your qualification level.";
-      const lower = query.toLowerCase();
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: query })
+      });
 
-      if (lower.includes('low budget') || lower.includes('germany') || lower.includes('sperrkonto') || lower.includes('cost')) {
-        reply = "Germany is the #1 low-budget destination for Indian STEM graduates: public university tuition is €0. You only need the mandatory Sperrkonto (Blocked Account) of €11,904 (~₹10.8 Lakhs) to secure your student visa, and after graduation you get an 18-month jobseeker visa leading to PR in 21 months with B1 German.";
-      } else if (lower.includes('opt') || lower.includes('stem') || lower.includes('usa') || lower.includes('h-1b')) {
-        reply = "In the USA, STEM-designated degrees grant a 24-month STEM OPT extension on top of the initial 12-month OPT, giving you 36 months (3 years) of legal full-time work authorization to enter the H-1B lottery multiple times.";
-      } else if (lower.includes('pr') || lower.includes('canada') || lower.includes('points') || lower.includes('cec')) {
-        reply = "For Canada, completing a 2-year Master's degree at a designated learning institution (DLI) grants a 3-year PGWP. 1 year of Canadian skilled work experience qualifies you for the Canadian Experience Class (CEC) stream under Express Entry.";
-      } else if (lower.includes('citizenship') || lower.includes('passport') || lower.includes('oci') || lower.includes('dual')) {
-        reply = "Crucial Legal Note: India does not permit dual citizenship. Once you acquire foreign citizenship, you must surrender your Indian passport under the Passports Act via the Passport Seva portal and apply for an Overseas Citizen of India (OCI) card for lifelong visa-free entry and work rights in India.";
-      } else if (lower.includes('loan') || lower.includes('sbi') || lower.includes('fund')) {
-        reply = "For Indian students, SBI Global Ed-Vantage offers education loans up to ₹1.5 Crores with 100% tax exemption on interest paid under Section 80E. Non-collateral options up to ₹40-50 Lakhs are available through HDFC Credila and Avanse for recognized universities.";
+      const data = await res.json();
+      if (res.ok && data.reply) {
+        setMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
+      } else {
+        setMessages(prev => [...prev, { 
+          sender: 'ai', 
+          text: `⚠️ ${data.error || 'Unable to connect to AI Counselor. Please make sure your GEMINI_API_KEY is configured in Vercel settings.'}` 
+        }]);
       }
-
-      setMessages(prev => [...prev, { sender: 'ai', text: reply }]);
-    }, 400);
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        sender: 'ai', 
+        text: '⚠️ Network connection issue. Please check your connection and try again.' 
+      }]);
+    } finally {
+      setIsLoadingAi(false);
+    }
   };
 
   const handleWhatsAppShare = () => {
@@ -104,7 +114,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans antialiased pb-24 selection:bg-[#008779] selection:text-white">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#0D3B43] to-[#008779] flex items-center justify-center shadow-md shadow-[#008779]/20">
@@ -142,7 +152,7 @@ export default function App() {
             { id: 'chancenkarte', label: 'Germany Chancenkarte (6 Pts)', icon: Award },
             { id: 'scholarships', label: 'Govt Scholarships', icon: Layers },
             { id: 'checklist', label: 'Relocation Roadmap', icon: CheckSquare },
-            { id: 'advisor', label: 'AI Advisor', icon: MessageSquareCode },
+            { id: 'advisor', label: 'AI Advisor (Gemini Live)', icon: MessageSquareCode },
           ].map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -199,7 +209,6 @@ export default function App() {
         {/* TAB 1: PATHWAYS */}
         {activeTab === 'pathways' && (
           <div className="space-y-6">
-            {/* Interactive Filters */}
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Max Budget (INR)</label>
@@ -242,7 +251,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Country Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Germany */}
               <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 space-y-4">
@@ -448,7 +456,7 @@ export default function App() {
                 <h2 className="text-lg sm:text-xl font-extrabold text-[#0D3B43]">Germany Opportunity Card (Chancenkarte)</h2>
                 <p className="text-xs text-slate-500 font-medium">Official 6-Points Live Calculator — Migrate without university admission</p>
               </div>
-              <div className="bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-2xl text-right sm:text-right shrink-0">
+              <div className="bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-2xl text-right shrink-0">
                 <span className="text-2xl font-black text-[#008779]">{ckTotal} / 6</span>
                 <p className={`text-[11px] font-bold ${ckTotal >= 6 ? 'text-emerald-600' : 'text-amber-600'}`}>
                   {ckTotal >= 6 ? '✅ Eligible for Visa Application' : '⚠️ Need at least 6 points'}
@@ -606,38 +614,55 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: AI MOBILITY ADVISOR */}
+        {/* TAB 5: AI MOBILITY ADVISOR (LIVE GEMINI CHAT) */}
         {activeTab === 'advisor' && (
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[540px]">
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[560px]">
             <div className="bg-[#0D3B43] text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles size={18} className="text-[#E5A93C]" />
-                <h3 className="font-extrabold text-sm">Migravo AI Mobility Counselor</h3>
+                <div>
+                  <h3 className="font-extrabold text-sm leading-tight">Migravo AI Mobility Counselor</h3>
+                  <p className="text-[10px] text-teal-200 font-medium">Powered by Gemini 1.5 Flash • Anti-Consultancy</p>
+                </div>
               </div>
-              <span className="text-[11px] bg-white/10 px-2.5 py-0.5 rounded-full text-emerald-300 font-semibold border border-white/10">
-                Verified Indian Assistant
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live API
               </span>
             </div>
 
+            {/* Quick Prompt Chips */}
             <div className="p-2.5 bg-slate-50/90 border-b border-slate-100 flex gap-2 overflow-x-auto no-scrollbar text-xs">
-              <button onClick={() => sendQuery("How to get PR in Germany in 21 months?")} className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition">
-                🇩🇪 German 21-Mo PR
+              <button 
+                onClick={() => sendQuery("Can I get into TU Munich or RWTH Aachen for free with a 7.5 CGPA in Mechanical Engineering from India?")}
+                className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition"
+              >
+                🇩🇪 German Uni with 7.5 CGPA
               </button>
-              <button onClick={() => sendQuery("What are the 3-year STEM OPT rules in USA?")} className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition">
-                🇺🇸 US 3-Yr STEM OPT
+              <button 
+                onClick={() => sendQuery("How does the 3-year STEM OPT work in the USA, and what are the exact rules for H-1B lottery attempts?")}
+                className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition"
+              >
+                🇺🇸 US 3-Yr STEM OPT Rules
               </button>
-              <button onClick={() => sendQuery("What happens to my Indian passport when I get foreign citizenship?")} className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition">
+              <button 
+                onClick={() => sendQuery("What are the mandatory legal steps to surrender an Indian passport after acquiring foreign citizenship and getting an OCI card?")}
+                className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition"
+              >
                 🇮🇳 OCI & Passport Surrender
               </button>
-              <button onClick={() => sendQuery("Can I study abroad under 15 Lakhs budget?")} className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition">
-                💰 Under ₹15L Options
+              <button 
+                onClick={() => sendQuery("How can an Indian middle-class student fund an MS in Germany under ₹15 Lakhs without collateral?")}
+                className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition"
+              >
+                💰 Non-collateral Funding
               </button>
             </div>
 
+            {/* Message Stream */}
             <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed ${
+                  <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
                     m.sender === 'user' 
                       ? 'bg-[#0D3B43] text-white rounded-br-none shadow-xs' 
                       : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200/80 shadow-xs'
@@ -646,22 +671,35 @@ export default function App() {
                   </div>
                 </div>
               ))}
+              {isLoadingAi && (
+                <div className="flex justify-start">
+                  <div className="bg-slate-100 border border-slate-200/80 text-slate-500 rounded-2xl rounded-bl-none p-3.5 text-xs flex items-center gap-2">
+                    <Loader2 size={14} className="animate-spin text-[#008779]" />
+                    <span>Migravo Counselor is reviewing regulations & formulating response...</span>
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Input Bar */}
             <div className="p-3 border-t border-slate-200/90 flex items-center gap-2 bg-white">
               <input 
                 type="text" 
                 value={inputMsg}
+                disabled={isLoadingAi}
                 onChange={(e) => setInputMsg(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && sendQuery()}
-                placeholder="Ask about PR rules, blocked accounts, education loans, or visa points..." 
-                className="flex-1 bg-slate-50 border border-slate-200/90 text-xs rounded-xl p-2.5 outline-none focus:border-[#008779] font-medium"
+                placeholder="Ask about PR rules, blocked accounts, APS, loan tax benefits, or visa scoring..." 
+                className="flex-1 bg-slate-50 border border-slate-200/90 text-xs rounded-xl p-2.5 outline-none focus:border-[#008779] font-medium disabled:opacity-60"
               />
               <button 
                 onClick={() => sendQuery()}
-                className="bg-[#008779] hover:bg-teal-700 text-white p-2.5 rounded-xl transition shadow-sm active:scale-95"
+                disabled={isLoadingAi || !inputMsg.trim()}
+                className={`bg-[#008779] hover:bg-teal-700 text-white p-2.5 rounded-xl transition shadow-sm active:scale-95 flex items-center justify-center ${
+                  isLoadingAi || !inputMsg.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                <Send size={14} />
+                {isLoadingAi ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               </button>
             </div>
           </div>
@@ -669,7 +707,7 @@ export default function App() {
 
       </main>
 
-      {/* POPUP MODAL: VIRAL SCORECARD & AFFILIATE MONETIZATION */}
+      {/* POPUP MODAL: VIRAL SCORECARD & PARTNER MONETIZATION */}
       {showShareModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200/90">
@@ -751,7 +789,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Partner Funding Section */}
+              {/* Pre-approved Official Funding Section */}
               <div className="border-t border-slate-100 pt-3 space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Pre-Approved Official Funding Partners</span>
                 
