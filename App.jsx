@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   Compass, Award, CheckSquare, MessageSquareCode, 
   ExternalLink, Sparkles, Send, Layers, CheckCircle2, 
-  Share2, Globe2, X, Landmark, ArrowUpRight, Zap
+  Share2, Globe2, X, Landmark, ArrowUpRight,
+  Zap
 } from 'lucide-react';
 
 export default function App() {
