@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Compass, Award, CheckSquare, MessageSquareCode, 
   ExternalLink, Sparkles, Send, Layers, CheckCircle2, 
-  Share2, Globe2, X, Landmark, ArrowUpRight, Zap, Loader2
+  Share2, Globe2, X, Landmark, ArrowUpRight, Zap, Loader2,
+  GraduationCap, Search, Filter, BookOpen
 } from 'lucide-react';
 
 // Lightweight Markdown parser: cleanly handles **bold**, [link](url), and * / - bullet points
@@ -71,6 +72,106 @@ function FormattedMessage({ content }) {
   );
 }
 
+// Curated public university program directory (€0 tuition, English-taught)
+const UNIVERSITY_PROGRAMS = [
+  {
+    id: 1,
+    name: 'Technical University of Munich (TUM)',
+    program: 'M.Sc. Informatics / Computer Science',
+    degree: 'Masters',
+    discipline: 'CS & AI',
+    tuition: '€0 Tuition (Semester fee ~€150)',
+    deadline: '31 May (Winter Intake)',
+    language: '100% English',
+    minCgpa: '7.5+ / High Math ECTS',
+    url: 'https://www.tum.de/en/studies/degree-programs/detail/informatics-master-of-science-msc'
+  },
+  {
+    id: 2,
+    name: 'RWTH Aachen University',
+    program: 'M.Sc. Automotive Engineering',
+    degree: 'Masters',
+    discipline: 'Mechanical',
+    tuition: '€0 Tuition (Semester fee ~€300)',
+    deadline: '01 March (Intl Deadlines)',
+    language: '100% English',
+    minCgpa: '7.8+ / GRE recommended',
+    url: 'https://www.rwth-aachen.de/cms/root/studium/vor-dem-studium/studiengaenge/liste-aktuelle-studiengaenge/studiengangbeschreibung/~bkrg/Automotive-Engineering-M-Sc-/'
+  },
+  {
+    id: 3,
+    name: 'TU Berlin (Technical University of Berlin)',
+    program: 'M.Sc. Computer Science / Information Systems',
+    degree: 'Masters',
+    discipline: 'CS & AI',
+    tuition: '€0 Tuition (Semester ticket included)',
+    deadline: '15 June (Winter)',
+    language: '100% English',
+    minCgpa: '7.0+ CGPA',
+    url: 'https://www.tu.berlin/en/studying/degree-programs/master'
+  },
+  {
+    id: 4,
+    name: 'University of Stuttgart',
+    program: 'M.Sc. Computational Mechanics of Materials and Structures',
+    degree: 'Masters',
+    discipline: 'Mechanical',
+    tuition: '€1,500/sem (Baden-Württemberg fee rule)',
+    deadline: '15 February',
+    language: '100% English',
+    minCgpa: '7.5+ in Mechanical/Civil',
+    url: 'https://www.uni-stuttgart.de/en/study/study-programs/master/'
+  },
+  {
+    id: 5,
+    name: 'Saarland University',
+    program: 'M.Sc. Data Science and Artificial Intelligence',
+    degree: 'Masters',
+    discipline: 'CS & AI',
+    tuition: '€0 Tuition (Zero tuition fees)',
+    deadline: '15 May',
+    language: '100% English',
+    minCgpa: 'Max Planck Institute affiliated',
+    url: 'https://saarland-informatics-campus.de/en/computerscience-programs/data-science-and-artificial-intelligence-msc/'
+  },
+  {
+    id: 6,
+    name: 'FAU Erlangen-Nürnberg',
+    program: 'M.Sc. Artificial Intelligence',
+    degree: 'Masters',
+    discipline: 'CS & AI',
+    tuition: '€0 Tuition (Semester contribution ~€72)',
+    deadline: '15 July',
+    language: '100% English',
+    minCgpa: 'Strong Python/Math background',
+    url: 'https://www.fau.eu/education/degree-programmes/master-programmes/artificial-intelligence-msc/'
+  },
+  {
+    id: 7,
+    name: 'TU Dresden',
+    program: 'M.Sc. Nanoelectronic Systems',
+    degree: 'Masters',
+    discipline: 'CoreEngg',
+    tuition: '€0 Tuition (Semester fee only)',
+    deadline: '31 May',
+    language: '100% English',
+    minCgpa: 'ECE / Electrical Bachelor',
+    url: 'https://tu-dresden.de/ing/elektrotechnik/studium/studienangebot/master-studiengaenge/nes'
+  },
+  {
+    id: 8,
+    name: 'TH Köln (University of Applied Sciences)',
+    program: 'B.Eng. Automation & IT (International)',
+    degree: 'Bachelors',
+    discipline: 'CS & AI',
+    tuition: '€0 Tuition',
+    deadline: '15 July',
+    language: 'Bilingual / English track',
+    minCgpa: '12th Grade 75%+ or Studienkolleg',
+    url: 'https://www.th-koeln.de/en/'
+  }
+];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('pathways');
   const [budget, setBudget] = useState('mid');
@@ -78,6 +179,11 @@ export default function App() {
   const [ielts, setIelts] = useState('7.0');
   const [userName, setUserName] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // University Finder Filter State
+  const [uniSearch, setUniSearch] = useState('');
+  const [uniDegreeFilter, setUniDegreeFilter] = useState('All');
+  const [uniDisciplineFilter, setUniDisciplineFilter] = useState('All');
 
   // Relocation Roadmap
   const [checklist, setChecklist] = useState([
@@ -134,6 +240,18 @@ export default function App() {
   ]);
   const [inputMsg, setInputMsg] = useState('');
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll whenever messages change or loading begins
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (activeTab === 'advisor') {
+      scrollToBottom();
+    }
+  }, [messages, isLoadingAi, activeTab]);
 
   const sendQuery = async (text) => {
     const query = text || inputMsg;
@@ -177,6 +295,16 @@ export default function App() {
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
+  // Filtered public universities list
+  const filteredUniversities = UNIVERSITY_PROGRAMS.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(uniSearch.toLowerCase()) || 
+                          item.program.toLowerCase().includes(uniSearch.toLowerCase()) ||
+                          item.discipline.toLowerCase().includes(uniSearch.toLowerCase());
+    const matchesDegree = uniDegreeFilter === 'All' || item.degree === uniDegreeFilter;
+    const matchesDiscipline = uniDisciplineFilter === 'All' || item.discipline === uniDisciplineFilter;
+    return matchesSearch && matchesDegree && matchesDiscipline;
+  });
+
   return (
     <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans antialiased pb-24 selection:bg-[#008779] selection:text-white">
       {/* Sticky Header */}
@@ -215,6 +343,7 @@ export default function App() {
         <div className="max-w-6xl mx-auto px-4 flex gap-1.5 overflow-x-auto py-2.5 no-scrollbar border-t border-slate-100">
           {[
             { id: 'pathways', label: 'Country Pathways', icon: Globe2 },
+            { id: 'unifinder', label: '€0 Universities', icon: GraduationCap },
             { id: 'chancenkarte', label: 'Germany Chancenkarte (6 Pts)', icon: Award },
             { id: 'scholarships', label: 'Govt Scholarships', icon: Layers },
             { id: 'checklist', label: 'Relocation Roadmap', icon: CheckSquare },
@@ -353,14 +482,12 @@ export default function App() {
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                  <a 
-                    href="https://www.make-it-in-germany.com/en/" 
-                    target="_blank" 
-                    rel="noreferrer"
+                  <button 
+                    onClick={() => setActiveTab('unifinder')}
                     className="text-xs font-bold text-[#008779] hover:underline flex items-center gap-1"
                   >
-                    Make it in Germany <ExternalLink size={12} />
-                  </a>
+                    View €0 Course Directory <BookOpen size={13} />
+                  </button>
                   <button 
                     onClick={() => setActiveTab('chancenkarte')}
                     className="text-xs bg-[#0D3B43] hover:bg-[#09262C] text-white px-3 py-1.5 rounded-lg font-bold transition active:scale-95"
@@ -514,7 +641,127 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: CHANCENKARTE SIMULATOR */}
+        {/* TAB 2: €0 PUBLIC UNIVERSITY & COURSE FINDER (NEW) */}
+        {activeTab === 'unifinder' && (
+          <div className="space-y-5">
+            {/* Filter Bar */}
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h2 className="text-base font-extrabold text-[#0D3B43] flex items-center gap-2">
+                    <GraduationCap className="text-[#008779] w-5 h-5" /> 
+                    Public University €0-Tuition Course Directory
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium">
+                    100% English-taught degree programs at premier German public institutions
+                  </p>
+                </div>
+                <span className="text-xs font-bold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 self-start sm:self-auto">
+                  {filteredUniversities.length} Programs Found
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3.5 top-3 text-slate-400" />
+                  <input 
+                    type="text"
+                    value={uniSearch}
+                    onChange={(e) => setUniSearch(e.target.value)}
+                    placeholder="Search university or course name..."
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779]"
+                  />
+                </div>
+
+                <div>
+                  <select
+                    value={uniDegreeFilter}
+                    onChange={(e) => setUniDegreeFilter(e.target.value)}
+                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779] cursor-pointer"
+                  >
+                    <option value="All">All Degrees (Masters & Bachelors)</option>
+                    <option value="Masters">Masters Programs (M.Sc.)</option>
+                    <option value="Bachelors">Bachelors Programs (B.Sc./B.Eng.)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <select
+                    value={uniDisciplineFilter}
+                    onChange={(e) => setUniDisciplineFilter(e.target.value)}
+                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779] cursor-pointer"
+                  >
+                    <option value="All">All Disciplines</option>
+                    <option value="CS & AI">Computer Science, AI & Data</option>
+                    <option value="Mechanical">Mechanical & Automotive</option>
+                    <option value="CoreEngg">Electrical & Electronics</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* University Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredUniversities.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-bold text-[#008779] bg-teal-50 px-2 py-0.5 rounded uppercase tracking-wider">
+                          {item.degree} • {item.discipline}
+                        </span>
+                        <h3 className="font-extrabold text-slate-900 text-sm mt-1.5 leading-snug">{item.name}</h3>
+                        <p className="text-xs font-semibold text-slate-600">{item.program}</p>
+                      </div>
+                      <span className="bg-emerald-100/80 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">
+                        {item.language}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-2.5 rounded-xl text-xs">
+                      <div>
+                        <span className="text-slate-400 text-[10px] block">Tuition Fee</span>
+                        <span className="font-bold text-emerald-600">{item.tuition}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block">Application Deadline</span>
+                        <span className="font-semibold text-slate-800">{item.deadline}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-slate-400 text-[10px] block">Academic Eligibility Benchmark</span>
+                        <span className="font-semibold text-slate-700">{item.minCgpa}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-slate-400 font-medium">Apply via Uni-Assist / Direct</span>
+                    <a 
+                      href={item.url} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="bg-[#0D3B43] hover:bg-[#09262C] text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition active:scale-95"
+                    >
+                      Official Program Page <ExternalLink size={12} />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredUniversities.length === 0 && (
+              <div className="bg-white p-8 rounded-2xl border border-slate-200/90 text-center text-xs text-slate-500 space-y-2">
+                <p className="font-bold text-slate-700">No programs match your current search.</p>
+                <p>Try resetting the filter or search query to view all available €0 public programs.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: CHANCENKARTE SIMULATOR */}
         {activeTab === 'chancenkarte' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-5 gap-3">
@@ -593,7 +840,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: SCHOLARSHIPS */}
+        {/* TAB 4: SCHOLARSHIPS */}
         {activeTab === 'scholarships' && (
           <div className="space-y-4">
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
@@ -635,7 +882,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: RELOCATION ROADMAP */}
+        {/* TAB 5: RELOCATION ROADMAP */}
         {activeTab === 'checklist' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-2">
@@ -680,9 +927,9 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: AI MOBILITY ADVISOR (LIVE GEMINI CHAT WITH MARKDOWN) */}
+        {/* TAB 6: AI MOBILITY ADVISOR (LIVE GEMINI WITH AUTO-SCROLL) */}
         {activeTab === 'advisor' && (
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[560px]">
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[580px]">
             <div className="bg-[#0D3B43] text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles size={18} className="text-[#E5A93C]" />
@@ -724,7 +971,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Message Stream */}
+            {/* Message Stream with auto-scroll target */}
             <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -745,10 +992,12 @@ export default function App() {
                 <div className="flex justify-start">
                   <div className="bg-slate-100 border border-slate-200/80 text-slate-500 rounded-2xl rounded-bl-none p-3.5 text-xs flex items-center gap-2">
                     <Loader2 size={14} className="animate-spin text-[#008779]" />
-                    <span>Migravo Counselor is reviewing regulations & formulating response...</span>
+                    <span>Migravo Counselor is formulating response...</span>
                   </div>
                 </div>
               )}
+              {/* Invisible anchor for automatic scrolling */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input Bar */}
