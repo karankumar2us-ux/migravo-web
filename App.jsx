@@ -252,7 +252,7 @@ export default function App() {
     }
   }, [messages, isLoadingAi, activeTab]);
 
-  // Multi-Turn Streaming Query Handler
+  // Robust Error-Surfacing Query Handler
   const sendQuery = async (text) => {
     const query = text || inputMsg;
     if (!query.trim() || isLoadingAi) return;
@@ -277,35 +277,28 @@ export default function App() {
         })
       });
 
+      const rawText = await res.text();
+      let data = {};
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(`Server returned HTTP ${res.status}: ${rawText.slice(0, 100)}`);
+      }
+
       if (!res.ok) {
-        let serverErrorMsg = 'Failed to connect to AI Counselor';
-        try {
-          const errorData = await res.json();
-          if (errorData?.error) serverErrorMsg = errorData.error;
-        } catch (e) {
-          // Response body was not JSON
-        }
-        throw new Error(serverErrorMsg);
+        throw new Error(data.error || `Error ${res.status}: Request failed`);
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        updated[lastIdx] = {
+          ...updated[lastIdx],
+          text: data.reply || 'No response received.'
+        };
+        return updated;
+      });
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        setMessages(prev => {
-          const updated = [...prev];
-          const lastIdx = updated.length - 1;
-          updated[lastIdx] = {
-            ...updated[lastIdx],
-            text: updated[lastIdx].text + chunk
-          };
-          return updated;
-        });
-      }
     } catch (err) {
       setMessages(prev => {
         const updated = [...prev];
