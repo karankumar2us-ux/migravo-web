@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Migravo — From Bharat to the World</title>
+    <!-- Tailwind CSS CDN for instant styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                deep: '#0D3B43',
+                teal: '#0E535D',
+                emerald: '#008779',
+                gold: '#E5A93C',
+                goldLight: '#FEF3C7',
+                canvas: '#F8FAFC',
+                border: '#E2E8F0'
+              }
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-[#F8FAFC] text-slate-900">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
