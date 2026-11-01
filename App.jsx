@@ -1,76 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { 
   Compass, Award, CheckSquare, 
-  ExternalLink, Sparkles, Send, Layers, CheckCircle2, 
-  Share2, Globe2, X, Landmark, ArrowUpRight, Zap, Loader2,
-  GraduationCap, Search, BookOpen, Download, Printer
+  ExternalLink, Layers, CheckCircle2, 
+  Share2, Globe2, X, Landmark, ArrowUpRight, Zap,
+  GraduationCap, Search, BookOpen, Download, Printer,
+  Headphones, MessageCircle, Mail, HelpCircle, PhoneCall
 } from 'lucide-react';
-
-// Lightweight Markdown parser: cleanly handles **bold**, [link](url), and * / - bullet points
-function FormattedMessage({ content }) {
-  const lines = content.split('\n');
-
-  return (
-    <div className="space-y-2 text-xs leading-relaxed">
-      {lines.map((line, idx) => {
-        const trimmed = line.trim();
-        if (!trimmed) return <div key={idx} className="h-1" />;
-
-        const isBullet = trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ');
-        const cleanLine = isBullet ? trimmed.replace(/^[\*\-•]\s+/, '') : line;
-
-        const parts = [];
-        let cursor = 0;
-        const regex = /(\*\*.*?\*\*|\[.*?\]\(.*?\))/g;
-        let match;
-
-        while ((match = regex.exec(cleanLine)) !== null) {
-          if (match.index > cursor) {
-            parts.push(cleanLine.substring(cursor, match.index));
-          }
-          const token = match[0];
-          if (token.startsWith('**') && token.endsWith('**')) {
-            parts.push(
-              <strong key={match.index} className="font-extrabold text-[#0D3B43]">
-                {token.slice(2, -2)}
-              </strong>
-            );
-          } else if (token.startsWith('[') && token.includes('](')) {
-            const label = token.slice(1, token.indexOf(']('));
-            const url = token.slice(token.indexOf('](') + 2, -1);
-            parts.push(
-              <a 
-                key={match.index} 
-                href={url} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="text-[#008779] underline font-bold hover:text-teal-800 inline-flex items-center gap-0.5"
-              >
-                {label}
-              </a>
-            );
-          }
-          cursor = regex.lastIndex;
-        }
-
-        if (cursor < cleanLine.length) {
-          parts.push(cleanLine.substring(cursor));
-        }
-
-        if (isBullet) {
-          return (
-            <div key={idx} className="flex items-start gap-2 pl-1.5">
-              <span className="text-[#008779] font-black text-sm leading-none mt-0.5">•</span>
-              <div className="flex-1">{parts}</div>
-            </div>
-          );
-        }
-
-        return <p key={idx}>{parts}</p>;
-      })}
-    </div>
-  );
-}
 
 // Curated public university program directory (€0 tuition, English-taught)
 const UNIVERSITY_PROGRAMS = [
@@ -172,6 +107,25 @@ const UNIVERSITY_PROGRAMS = [
   }
 ];
 
+const FAQS = [
+  {
+    q: "Can I really study in Germany for €0 tuition?",
+    a: "Yes! 15 out of 16 German federal states charge exactly €0 tuition for international students at public universities. You only pay a semester administrative ticket fee of ~€150 to €350 which includes public transit."
+  },
+  {
+    q: "What is an APS Certificate and do all Indian students need it?",
+    a: "Yes, every applicant with Indian academic credentials applying for a German student visa must get an APS verification certificate from aps-india.de before submitting university or visa applications."
+  },
+  {
+    q: "What is the 3-Year STEM OPT in the USA?",
+    a: "Students who graduate with a designated STEM degree (Science, Tech, Engineering, Math) in the US get 12 months of initial post-completion OPT + a 24-month STEM extension, giving you 3 total years to work and enter the H-1B lottery."
+  },
+  {
+    q: "Can I get an education loan without collateral?",
+    a: "Yes, government portal Vidya Lakshmi and lenders like SBI (Global Ed-Vantage) and HDFC Credila provide non-collateral loans up to ₹40 Lakhs based on test scores and co-applicant income, with 100% interest tax deduction under Section 80E."
+  }
+];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('pathways');
   const [budget, setBudget] = useState('mid');
@@ -184,6 +138,10 @@ export default function App() {
   const [uniSearch, setUniSearch] = useState('');
   const [uniDegreeFilter, setUniDegreeFilter] = useState('All');
   const [uniDisciplineFilter, setUniDisciplineFilter] = useState('All');
+
+  // Customer Support Form State
+  const [supportName, setSupportName] = useState('');
+  const [supportQuery, setSupportQuery] = useState('');
 
   // Relocation Roadmap
   const [checklist, setChecklist] = useState([
@@ -231,102 +189,29 @@ export default function App() {
 
   const ckTotal = calculateChancenkartePoints();
 
-  // AI Counselor State & Multi-Turn Dynamic API Handler
-  const [messages, setMessages] = useState([
-    { 
-      sender: 'ai', 
-      text: 'Namaste! I am your Migravo AI Counselor powered by Gemini. Ask me anything about €0 German university tuition, APS requirements, 36-month STEM OPT in the US, SBI education loans, or passport surrender rules.' 
-    }
-  ]);
-  const [inputMsg, setInputMsg] = useState('');
-  const [isLoadingAi, setIsLoadingAi] = useState(false);
-  const messagesEndRef = useRef(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    if (activeTab === 'advisor') {
-      scrollToBottom();
-    }
-  }, [messages, isLoadingAi, activeTab]);
-
-  // Real-Time Streaming Edge Consumer
-  const sendQuery = async (text) => {
-    const query = text || inputMsg;
-    if (!query.trim() || isLoadingAi) return;
-
-    const historySnapshot = messages.slice(1);
-
-    setMessages(prev => [
-      ...prev, 
-      { sender: 'user', text: query },
-      { sender: 'ai', text: '' }
-    ]);
-    setInputMsg('');
-    setIsLoadingAi(true);
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: query,
-          history: historySnapshot 
-        })
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        let errMsg = `Server returned HTTP ${res.status}`;
-        try {
-          const parsed = JSON.parse(errText);
-          if (parsed.error) errMsg = parsed.error;
-        } catch {}
-        throw new Error(errMsg);
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        setMessages(prev => {
-          const updated = [...prev];
-          const lastIdx = updated.length - 1;
-          updated[lastIdx] = {
-            ...updated[lastIdx],
-            text: (updated[lastIdx].text || '') + chunk
-          };
-          return updated;
-        });
-      }
-
-    } catch (err) {
-      setMessages(prev => {
-        const updated = [...prev];
-        const lastIdx = updated.length - 1;
-        updated[lastIdx] = {
-          ...updated[lastIdx],
-          text: `⚠️ ${err.message}`
-        };
-        return updated;
-      });
-    } finally {
-      setIsLoadingAi(false);
-    }
-  };
-
   const handleWhatsAppShare = () => {
     const candidateName = userName.trim() ? `${userName.trim()}'s` : "My";
     const text = encodeURIComponent(
       `✈️ ${candidateName} Global Mobility Evaluation on Migravo:\n🎯 Readiness Score: ${readinessPercent}%\n🇩🇪 Germany Chancenkarte: ${ckTotal}/6 Points\n💰 Budget Tier: ${budget === 'low' ? '< ₹15L' : budget === 'mid' ? '₹15L-₹35L' : '₹35L+'}\n\nCheck your score without consultant fees: https://migravo-web.vercel.app`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
+  const handleSupportWhatsApp = () => {
+    const name = supportName.trim() || 'Student';
+    const query = supportQuery.trim() || 'I need help navigating admission / visa pathways.';
+    const text = encodeURIComponent(
+      `Hello Migravo Team!\nMy name is ${name}.\nDiscipline: ${field} | IELTS: ${ielts}\nQuery: ${query}`
+    );
+    window.open(`https://api.whatsapp.com/send?phone=919876543210&text=${text}`, '_blank');
+  };
+
+  const handleSupportEmail = () => {
+    const name = supportName.trim() || 'Student';
+    const query = supportQuery.trim() || 'I need guidance regarding my application dossier.';
+    const subject = encodeURIComponent(`[Migravo Assistance] Query from ${name}`);
+    const body = encodeURIComponent(`Name: ${name}\nField: ${field}\nReadiness: ${readinessPercent}%\nChancenkarte: ${ckTotal}/6\n\nQuery:\n${query}`);
+    window.location.href = `mailto:support@migravo.in?subject=${subject}&body=${body}`;
   };
 
   // Printable Relocation Report PDF Generator
@@ -438,7 +323,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans antialiased pb-24 selection:bg-[#008779] selection:text-white">
-      {/* Sticky Header with Permanent AI Advisor Access */}
+      {/* Sticky Header with Direct Support Button */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -456,17 +341,17 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* The single primary AI Advisor button */}
+            {/* Direct Support Button */}
             <button 
-              onClick={() => setActiveTab('advisor')}
+              onClick={() => setActiveTab('support')}
               className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition active:scale-95 ${
-                activeTab === 'advisor'
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                  : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                activeTab === 'support'
+                  ? 'bg-[#008779] text-white border-[#008779] shadow-sm'
+                  : 'bg-teal-50 text-[#008779] border-teal-200 hover:bg-teal-100'
               }`}
             >
-              <Sparkles size={14} className="text-[#E5A93C]" />
-              <span>AI Advisor</span>
+              <Headphones size={14} className="text-[#E5A93C]" />
+              <span>Get Support</span>
             </button>
 
             <button 
@@ -498,6 +383,7 @@ export default function App() {
                 { id: 'chancenkarte', label: 'Germany Chancenkarte (6 Pts)', icon: Award },
                 { id: 'scholarships', label: 'Govt Scholarships', icon: Layers },
                 { id: 'checklist', label: 'Relocation Roadmap', icon: CheckSquare },
+                { id: 'support', label: 'Student Support Desk', icon: Headphones },
               ].map(tab => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.id;
@@ -1086,96 +972,163 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 6: AI MOBILITY ADVISOR (ACTIVATED VIA TOP HEADER BUTTON) */}
-        {activeTab === 'advisor' && (
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[580px]">
-            <div className="bg-[#0D3B43] text-white p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles size={18} className="text-[#E5A93C]" />
-                <div>
-                  <h3 className="font-extrabold text-sm leading-tight">Migravo AI Mobility Counselor</h3>
-                  <p className="text-[10px] text-teal-200 font-medium">Powered by Gemini • Anti-Consultancy</p>
+        {/* TAB 6: DEDICATED STUDENT SUPPORT DESK */}
+        {activeTab === 'support' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-5 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-[#008779] bg-teal-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    Zero-Broker Assistance
+                  </span>
+                  <h2 className="text-xl font-extrabold text-[#0D3B43] flex items-center gap-2">
+                    <Headphones className="text-[#008779] w-6 h-6" /> Student Support & Advisory Desk
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Connect directly with verified relocation specialists without agency commissions.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-xs font-bold text-emerald-700">Advisors Online Now</span>
                 </div>
               </div>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Multi-Turn Memory Active
-              </span>
-            </div>
 
-            {/* Quick Prompt Chips */}
-            <div className="p-2.5 bg-slate-50/90 border-b border-slate-100 flex gap-2 overflow-x-auto no-scrollbar text-xs">
-              <button 
-                onClick={() => sendQuery("Can I get into TU Munich or RWTH Aachen for free with a 7.5 CGPA in Mechanical Engineering from India?")}
-                className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition"
-              >
-                🇩🇪 German Uni with 7.5 CGPA
-              </button>
-              <button 
-                onClick={() => sendQuery("How does the 3-year STEM OPT work in the USA, and what are the exact rules for H-1B lottery attempts?")}
-                className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition"
-              >
-                🇺🇸 US 3-Yr STEM OPT Rules
-              </button>
-              <button 
-                onClick={() => sendQuery("What are the mandatory legal steps to surrender an Indian passport after acquiring foreign citizenship and getting an OCI card?")}
-                className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition"
-              >
-                🇮🇳 OCI & Passport Surrender
-              </button>
-              <button 
-                onClick={() => sendQuery("How can an Indian middle-class student fund an MS in Germany under ₹15 Lakhs without collateral?")}
-                className="bg-white px-3 py-1.5 rounded-full border border-slate-200 hover:border-[#008779] whitespace-nowrap font-medium transition"
-              >
-                💰 Non-collateral Funding
-              </button>
-            </div>
-
-            {/* Message Stream */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
-              {messages.map((m, idx) => (
-                <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed ${
-                    m.sender === 'user' 
-                      ? 'bg-[#0D3B43] text-white rounded-br-none shadow-xs whitespace-pre-wrap' 
-                      : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200/80 shadow-xs'
-                  }`}>
-                    {m.sender === 'user' ? (
-                      <p>{m.text}</p>
-                    ) : m.text ? (
-                      <FormattedMessage content={m.text} />
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-slate-400 py-0.5">
-                        <span className="w-1.5 h-1.5 bg-[#008779] rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                        <span className="w-1.5 h-1.5 bg-[#008779] rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                        <span className="w-1.5 h-1.5 bg-[#008779] rounded-full animate-bounce"></span>
-                      </div>
-                    )}
+              {/* Instant Contact Action Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* WhatsApp Direct */}
+                <div className="bg-emerald-50/70 border border-emerald-200/80 p-5 rounded-2xl flex flex-col justify-between space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                      <MessageCircle size={20} />
+                    </div>
+                    <h3 className="font-bold text-emerald-950 text-sm">Instant WhatsApp Helpdesk</h3>
+                    <p className="text-xs text-emerald-800/80 leading-relaxed">
+                      Chat directly with a mobility coordinator for urgent document reviews, APS timelines, or loan sanctions.
+                    </p>
                   </div>
+                  <button 
+                    onClick={handleSupportWhatsApp}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl shadow-xs transition active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle size={15} /> Chat on WhatsApp Now
+                  </button>
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
 
-            {/* Input Bar */}
-            <div className="p-3 border-t border-slate-200/90 flex items-center gap-2 bg-white">
-              <input 
-                type="text" 
-                value={inputMsg}
-                disabled={isLoadingAi}
-                onChange={(e) => setInputMsg(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && sendQuery()}
-                placeholder="Ask follow-ups naturally—the counselor remembers previous context..." 
-                className="flex-1 bg-slate-50 border border-slate-200/90 text-xs rounded-xl p-2.5 outline-none focus:border-[#008779] font-medium disabled:opacity-60"
-              />
-              <button 
-                onClick={() => sendQuery()}
-                disabled={isLoadingAi || !inputMsg.trim()}
-                className={`bg-[#008779] hover:bg-teal-700 text-white p-2.5 rounded-xl transition shadow-sm active:scale-95 flex items-center justify-center ${
-                  isLoadingAi || !inputMsg.trim() ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                {isLoadingAi ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              </button>
+                {/* Email Desk */}
+                <div className="bg-slate-50 border border-slate-200/90 p-5 rounded-2xl flex flex-col justify-between space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#0D3B43] text-white flex items-center justify-center shadow-xs">
+                      <Mail size={20} />
+                    </div>
+                    <h3 className="font-bold text-slate-900 text-sm">Email Escalation Desk</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Submit long-form profile evaluations, SOP reviews, or complex embassy queries for 24-hour turnaround.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={handleSupportEmail}
+                    className="w-full bg-[#0D3B43] hover:bg-[#09262C] text-white font-bold text-xs py-2.5 rounded-xl shadow-xs transition active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Mail size={15} /> Email Support (support@migravo.in)
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Contact Form */}
+              <div className="bg-white border border-slate-200/80 p-5 rounded-2xl space-y-3">
+                <h3 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Send a Direct Assistance Request</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="Your Name / City"
+                    value={supportName}
+                    onChange={(e) => setSupportName(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 text-xs rounded-xl p-2.5 font-medium outline-none focus:border-[#008779]"
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="What do you need help with? (e.g. APS, Visa Slot, GIC)"
+                    value={supportQuery}
+                    onChange={(e) => setSupportQuery(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 text-xs rounded-xl p-2.5 font-medium outline-none focus:border-[#008779]"
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button 
+                    onClick={handleSupportWhatsApp}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2 px-4 rounded-xl flex items-center gap-1.5 transition active:scale-95"
+                  >
+                    <MessageCircle size={13} /> Send via WhatsApp
+                  </button>
+                  <button 
+                    onClick={handleSupportEmail}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2 px-4 rounded-xl flex items-center gap-1.5 transition active:scale-95"
+                  >
+                    <Mail size={13} /> Send via Email
+                  </button>
+                </div>
+              </div>
+
+              {/* Official Helplines Directory */}
+              <div className="border-t border-slate-100 pt-5 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Direct Official Government Helpdesks</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <a 
+                    href="https://aps-india.de" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl hover:border-[#008779] transition flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="font-bold text-slate-800">APS India Portal</p>
+                      <p className="text-[11px] text-slate-400">German Embassy Verification</p>
+                    </div>
+                    <ExternalLink size={13} className="text-slate-400" />
+                  </a>
+
+                  <a 
+                    href="https://visa.vfsglobal.com/ind/en/deu" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl hover:border-[#008779] transition flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="font-bold text-slate-800">VFS Global India</p>
+                      <p className="text-[11px] text-slate-400">Biometrics & Visa Appointments</p>
+                    </div>
+                    <ExternalLink size={13} className="text-slate-400" />
+                  </a>
+
+                  <a 
+                    href="https://www.daad.in/en/" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl hover:border-[#008779] transition flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="font-bold text-slate-800">DAAD New Delhi</p>
+                      <p className="text-[11px] text-slate-400">Official German Advisory</p>
+                    </div>
+                    <ExternalLink size={13} className="text-slate-400" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Frequently Answered Questions Accordion */}
+              <div className="border-t border-slate-100 pt-5 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <HelpCircle size={14} /> Common Questions & Immediate Answers
+                </h3>
+                <div className="space-y-2">
+                  {FAQS.map((faq, i) => (
+                    <div key={i} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/70 space-y-1">
+                      <p className="font-bold text-xs text-slate-900">{faq.q}</p>
+                      <p className="text-xs text-slate-600 leading-relaxed">{faq.a}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
