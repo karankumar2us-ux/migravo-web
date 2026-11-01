@@ -6,7 +6,8 @@ import {
   Search, BookOpen, Download, Printer,
   Headphones, MessageCircle, Mail, HelpCircle,
   ShieldCheck, ArrowRight, DollarSign, Calendar, FileEdit,
-  ChevronLeft, ChevronRight, GraduationCap, Award
+  ChevronLeft, ChevronRight, GraduationCap, Award,
+  ArrowUp
 } from 'lucide-react';
 
 import LoanCalculator from './src/components/LoanCalculator';
@@ -245,6 +246,7 @@ export default function App() {
   const [fieldFilter, setFieldFilter] = useState(() => localStorage.getItem('migravo_field') || 'all');
   const [userName, setUserName] = useState(() => localStorage.getItem('migravo_name') || '');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   // University Directory Search state
   const [uniSearch, setUniSearch] = useState('');
@@ -278,6 +280,19 @@ export default function App() {
   // LocalStorage sync effects
   useEffect(() => {
     localStorage.setItem('migravo_tab', activeTab);
+    const tabTitles = {
+      pathways: 'Global Pathways',
+      loans: 'Loan & Section 80E',
+      aps: 'Credential Vault (APS/WES)',
+      scholarships: '58+ Scholarships',
+      unifinder: 'University Directory',
+      sop: 'SOP & LOR Builder',
+      visa: 'Visa & VFS Tracker',
+      living: 'City Cost & Earnings',
+      checklist: 'Relocation Roadmap',
+      support: 'Support Desk'
+    };
+    document.title = `Migravo — ${tabTitles[activeTab] || 'Zero-Broker Hub'}`;
   }, [activeTab]);
 
   useEffect(() => {
@@ -299,6 +314,27 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('migravo_checklist', JSON.stringify(checklist));
   }, [checklist]);
+
+  // Back to top scroll listener & Escape key handler
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowShareModal(false);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const toggleChecklist = (id) => {
     setChecklist(prev => prev.map(item => item.id === id ? { ...item, done: !item.done } : item));
@@ -884,6 +920,17 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Floating Back to Top Button */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-40 bg-[#0D3B43] hover:bg-[#008779] text-white p-3 rounded-2xl shadow-xl border border-white/20 transition-all duration-300 active:scale-90"
+          title="Back to Top"
+        >
+          <ArrowUp size={18} />
+        </button>
+      )}
 
       {/* Share Modal */}
       {showShareModal && (
