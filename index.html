@@ -2,37 +2,49 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23008779' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><polygon points='16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Migravo — From Bharat to the World</title>
     
-    <!-- PWA meta tags -->
-    <meta name="theme-color" content="#0D3B43" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              brand: {
-                deep: '#0D3B43',
-                teal: '#0E535D',
-                emerald: '#008779',
-                gold: '#E5A93C',
-                goldLight: '#FEF3C7',
-                canvas: '#F8FAFC',
-                border: '#E2E8F0'
-              }
-            }
-          }
+    <!-- Primary Meta Tags -->
+    <title>Migravo | Zero-Consultancy Global Mobility & University Advisory</title>
+    <meta name="title" content="Migravo | Zero-Consultancy Global Mobility & University Advisory" />
+    <meta name="description" content="Direct admissions to €0-tuition German universities, US 3-year STEM OPT guidance, Chancenkarte calculator, and PR roadmaps for Indian students without broker fees." />
+    <meta name="keywords" content="study in germany, zero tuition fee, chancenkarte calculator, stem opt usa, aps certificate india, blocked account expatrio" />
+    <meta name="author" content="Migravo" />
+
+    <!-- Open Graph / WhatsApp / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://migravo-web.vercel.app/" />
+    <meta property="og:title" content="Migravo | Zero-Consultancy Global Mobility Advisory" />
+    <meta property="og:description" content="Calculate your Chancenkarte score, find English-taught €0 tuition universities, and get live AI counsel on foreign visas." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=630&fit=crop&q=80" />
+
+    <!-- Twitter Meta Tags -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://migravo-web.vercel.app/" />
+    <meta property="twitter:title" content="Migravo | Zero-Consultancy Global Mobility Advisory" />
+    <meta property="twitter:description" content="Calculate your Chancenkarte score, find English-taught €0 tuition universities, and get live AI counsel on foreign visas." />
+    <meta property="twitter:image" content="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=630&fit=crop&q=80" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      @media print {
+        header, footer, nav, button, input, .no-print {
+          display: none !important;
+        }
+        .print-only {
+          display: block !important;
         }
       }
-    </script>
+    </style>
   </head>
-  <body class="bg-[#F8FAFC] text-slate-900">
+  <body class="bg-[#F4F6F8]">
     <div id="root"></div>
     <script type="module" src="/main.jsx"></script>
   </body>

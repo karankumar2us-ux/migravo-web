@@ -3,7 +3,7 @@ import {
   Compass, Award, CheckSquare, MessageSquareCode, 
   ExternalLink, Sparkles, Send, Layers, CheckCircle2, 
   Share2, Globe2, X, Landmark, ArrowUpRight, Zap, Loader2,
-  GraduationCap, Search, Filter, BookOpen
+  GraduationCap, Search, BookOpen, Download, Printer
 } from 'lucide-react';
 
 // Lightweight Markdown parser: cleanly handles **bold**, [link](url), and * / - bullet points
@@ -231,7 +231,7 @@ export default function App() {
 
   const ckTotal = calculateChancenkartePoints();
 
-  // AI Counselor State & Dynamic API Handler
+  // AI Counselor State & Multi-Turn Dynamic API Handler
   const [messages, setMessages] = useState([
     { 
       sender: 'ai', 
@@ -242,7 +242,6 @@ export default function App() {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll whenever messages change or loading begins
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -253,12 +252,14 @@ export default function App() {
     }
   }, [messages, isLoadingAi, activeTab]);
 
-  // Real-Time Streaming Send Query Handler
+  // Multi-Turn Streaming Query Handler
   const sendQuery = async (text) => {
     const query = text || inputMsg;
     if (!query.trim() || isLoadingAi) return;
 
-    // Push the user query and an empty bubble for the AI stream to write into
+    // Snapshot current conversation history to pass for context memory
+    const historySnapshot = messages.slice(1); // skip initial greeting
+
     setMessages(prev => [
       ...prev, 
       { sender: 'user', text: query },
@@ -271,7 +272,10 @@ export default function App() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: query })
+        body: JSON.stringify({ 
+          message: query,
+          history: historySnapshot 
+        })
       });
 
       if (!res.ok) {
@@ -320,7 +324,104 @@ export default function App() {
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
-  // Filtered public universities list
+  // Printable Relocation Report PDF Generator
+  const handleDownloadPDF = () => {
+    const printWindow = window.open('', '_blank');
+    const name = userName.trim() || 'Global Mobility Candidate';
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Migravo Relocation Dossier - ${name}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; }
+          .header { border-bottom: 3px solid #008779; padding-bottom: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+          .title { font-size: 24px; font-weight: 800; color: #0D3B43; margin: 0; }
+          .subtitle { font-size: 13px; color: #64748b; margin-top: 5px; }
+          .badge { background: #008779; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 12px; }
+          .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px; }
+          .card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; background: #f8fafc; }
+          .card-title { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+          .card-val { font-size: 22px; font-weight: 800; color: #0D3B43; margin-top: 5px; }
+          .section-title { font-size: 16px; font-weight: 800; color: #0D3B43; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-top: 25px; margin-bottom: 12px; }
+          ul { list-style: none; padding: 0; margin: 0; }
+          li { padding: 6px 0; font-size: 13px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; }
+          .status-done { color: #059669; font-weight: bold; }
+          .status-pending { color: #d97706; font-weight: bold; }
+          .footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1 class="title">MIGRAVO RELOCATION DOSSIER</h1>
+            <p class="subtitle">Anti-Broker Autonomous Global Mobility Verification</p>
+          </div>
+          <span class="badge">Verified Candidate Profile</span>
+        </div>
+
+        <p style="font-size: 15px; margin-bottom: 20px;"><strong>Candidate Name:</strong> ${name}</p>
+
+        <div class="grid">
+          <div class="card">
+            <div class="card-title">Readiness Index</div>
+            <div class="card-val">${readinessPercent}%</div>
+            <p style="font-size: 11px; color: #64748b; margin-top: 4px;">${completedCount} of 10 Milestones Verified</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Germany Chancenkarte Score</div>
+            <div class="card-val">${ckTotal} / 6 Pts</div>
+            <p style="font-size: 11px; color: ${ckTotal >= 6 ? '#059669' : '#d97706'}; font-weight: bold; margin-top: 4px;">
+              ${ckTotal >= 6 ? 'Eligible for Visa Application' : 'Below 6 Point Threshold'}
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-title">Target Discipline</div>
+            <div class="card-val" style="font-size: 16px;">${field}</div>
+            <p style="font-size: 11px; color: #64748b; margin-top: 4px;">Language Score: IELTS ${ielts}</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Financial Budget Tier</div>
+            <div class="card-val" style="font-size: 16px;">${budget === 'low' ? '< ₹15 Lakhs' : budget === 'mid' ? '₹15L - ₹35L' : '₹35L+'}</div>
+            <p style="font-size: 11px; color: #64748b; margin-top: 4px;">German Blocked Account: €11,904</p>
+          </div>
+        </div>
+
+        <div class="section-title">Milestone Roadmap Progress</div>
+        <ul>
+          ${checklist.map(item => `
+            <li>
+              <span>${item.title} (${item.phase})</span>
+              <span class="${item.done ? 'status-done' : 'status-pending'}">
+                ${item.done ? '✓ COMPLETED' : '○ PENDING'}
+              </span>
+            </li>
+          `).join('')}
+        </ul>
+
+        <div class="section-title">Official Government Portals</div>
+        <p style="font-size: 12px; color: #475569; line-height: 1.6;">
+          • <strong>Germany:</strong> make-it-in-germany.com & aps-india.de<br/>
+          • <strong>USA:</strong> travel.state.gov & studyinthestates.dhs.gov<br/>
+          • <strong>Canada:</strong> canada.ca/en/immigration-refugees-citizenship.html<br/>
+          • <strong>India Loan Guarantee:</strong> vidyalakshmi.co.in
+        </p>
+
+        <div class="footer">
+          Generated automatically by Migravo Mobility Platform on ${new Date().toLocaleDateString('en-IN')}.<br/>
+          Zero consultancy fees. Complete applicant ownership.
+        </div>
+
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const filteredUniversities = UNIVERSITY_PROGRAMS.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(uniSearch.toLowerCase()) || 
                           item.program.toLowerCase().includes(uniSearch.toLowerCase()) ||
@@ -350,6 +451,14 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <button 
+              onClick={handleDownloadPDF}
+              className="hidden md:flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 transition"
+              title="Download Relocation Summary PDF"
+            >
+              <Download size={13} className="text-[#008779]" />
+              <span>Export PDF</span>
+            </button>
             <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 px-3 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-700">
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Readiness: {readinessPercent}%
@@ -417,12 +526,21 @@ export default function App() {
               <p className="text-4xl font-black text-[#E5A93C]">{readinessPercent}%</p>
               <p className="text-[11px] text-teal-100">{completedCount} of 10 milestones completed</p>
             </div>
-            <button 
-              onClick={() => setShowShareModal(true)}
-              className="w-full bg-[#E5A93C] hover:bg-amber-400 text-slate-900 font-bold text-xs py-2.5 px-4 rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-1.5"
-            >
-              <Share2 size={13} /> Generate Relocation Card
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleDownloadPDF}
+                className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs py-2 px-3 rounded-xl transition active:scale-95 flex items-center justify-center gap-1"
+                title="Print Summary PDF"
+              >
+                <Printer size={13} /> PDF
+              </button>
+              <button 
+                onClick={() => setShowShareModal(true)}
+                className="flex-1 bg-[#E5A93C] hover:bg-amber-400 text-slate-900 font-bold text-xs py-2 px-3 rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <Share2 size={13} /> Get Badge
+              </button>
+            </div>
           </div>
         </section>
 
@@ -669,7 +787,6 @@ export default function App() {
         {/* TAB 2: €0 PUBLIC UNIVERSITY & COURSE FINDER */}
         {activeTab === 'unifinder' && (
           <div className="space-y-5">
-            {/* Filter Bar */}
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
@@ -725,7 +842,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* University Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredUniversities.map((item) => (
                 <div 
@@ -952,7 +1068,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 6: AI MOBILITY ADVISOR (LIVE GEMINI WITH REAL-TIME STREAMING) */}
+        {/* TAB 6: AI MOBILITY ADVISOR (MULTI-TURN STREAMING GEMINI) */}
         {activeTab === 'advisor' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[580px]">
             <div className="bg-[#0D3B43] text-white p-4 flex items-center justify-between">
@@ -964,7 +1080,7 @@ export default function App() {
                 </div>
               </div>
               <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Streaming Active
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Multi-Turn Memory Active
               </span>
             </div>
 
@@ -996,7 +1112,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Message Stream with auto-scroll target */}
+            {/* Message Stream */}
             <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -1019,7 +1135,6 @@ export default function App() {
                   </div>
                 </div>
               ))}
-              {/* Invisible anchor for automatic scrolling */}
               <div ref={messagesEndRef} />
             </div>
 
@@ -1031,7 +1146,7 @@ export default function App() {
                 disabled={isLoadingAi}
                 onChange={(e) => setInputMsg(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && sendQuery()}
-                placeholder="Ask about PR rules, blocked accounts, APS, loan tax benefits, or visa scoring..." 
+                placeholder="Ask follow-ups naturally—the counselor remembers previous context..." 
                 className="flex-1 bg-slate-50 border border-slate-200/90 text-xs rounded-xl p-2.5 outline-none focus:border-[#008779] font-medium disabled:opacity-60"
               />
               <button 
@@ -1102,7 +1217,7 @@ export default function App() {
                   </div>
                   <div className="bg-white/10 p-2.5 rounded-xl">
                     <span className="text-teal-200 block text-[10px] font-medium">Planned Budget</span>
-                    <span className="text-xs font-bold text-white">{budget === 'low' ? '< ₹15 Lakhs' : budget === 'mid' ? '₹15L - ₹35L' : '₹35L+'}`</span>
+                    <span className="text-xs font-bold text-white">{budget === 'low' ? '< ₹15 Lakhs' : budget === 'mid' ? '₹15L - ₹35L' : '₹35L+'}</span>
                   </div>
                 </div>
 
@@ -1121,13 +1236,10 @@ export default function App() {
                   <Share2 size={14} /> Share on WhatsApp
                 </button>
                 <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText('https://migravo-web.vercel.app');
-                    alert("Website link copied to clipboard!");
-                  }}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs py-2.5 px-4 rounded-xl transition"
+                  onClick={handleDownloadPDF}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5"
                 >
-                  Copy Link
+                  <Download size={14} /> PDF
                 </button>
               </div>
 
@@ -1135,7 +1247,6 @@ export default function App() {
               <div className="border-t border-slate-100 pt-3 space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Pre-Approved Official Funding Partners</span>
                 
-                {/* Loan Partner */}
                 <div className="flex items-center justify-between p-2.5 bg-amber-50/80 rounded-xl border border-amber-200/60 text-xs">
                   <div className="flex items-center gap-2">
                     <Landmark size={15} className="text-amber-800" />
@@ -1154,7 +1265,6 @@ export default function App() {
                   </a>
                 </div>
 
-                {/* Blocked Account Partner */}
                 <div className="flex items-center justify-between p-2.5 bg-teal-50/80 rounded-xl border border-teal-200/60 text-xs">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">🏛️</span>
