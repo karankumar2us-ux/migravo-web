@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Compass, CheckSquare, 
   ExternalLink, Layers, CheckCircle2, 
@@ -6,7 +6,7 @@ import {
   Search, BookOpen, Download, Printer,
   Headphones, MessageCircle, Mail, HelpCircle,
   ShieldCheck, ArrowRight, DollarSign, Calendar, FileEdit,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, GraduationCap
 } from 'lucide-react';
 
 import LoanCalculator from './src/components/LoanCalculator';
@@ -211,31 +211,93 @@ const DESTINATIONS = [
   }
 ];
 
+// Expanded Global University Directory across Germany, USA, Canada, UK, and Ireland
+const GLOBAL_UNIVERSITIES = [
+  // Germany (€0 Tuition Public)
+  { id: 1, country: 'Germany', flag: '🇩🇪', name: 'Technical University of Munich (TUM)', program: 'M.Sc. Informatics / Computer Science', degree: 'Masters', discipline: 'CS & AI', tuition: '€0 (Semester fee ~€150)', deadline: '31 May', url: 'https://www.tum.de' },
+  { id: 2, country: 'Germany', flag: '🇩🇪', name: 'RWTH Aachen University', program: 'M.Sc. Automotive Engineering', degree: 'Masters', discipline: 'Mechanical', tuition: '€0 (Semester fee ~€300)', deadline: '01 March', url: 'https://www.rwth-aachen.de' },
+  { id: 3, country: 'Germany', flag: '🇩🇪', name: 'TU Berlin', program: 'M.Sc. Computer Science', degree: 'Masters', discipline: 'CS & AI', tuition: '€0 (Semester ticket incl.)', deadline: '15 June', url: 'https://www.tu.berlin' },
+
+  // USA (High-ROI Public Universities with STEM OPT)
+  { id: 4, country: 'United States', flag: '🇺🇸', name: 'Purdue University', program: 'M.S. Computer Science / Engineering', degree: 'Masters', discipline: 'CS & AI', tuition: '$29,000 / yr (Top Public ROI)', deadline: '15 January', url: 'https://www.purdue.edu' },
+  { id: 5, country: 'United States', flag: '🇺🇸', name: 'Georgia Institute of Technology', program: 'M.S. Cybersecurity / Analytics', degree: 'Masters', discipline: 'CS & AI', tuition: '$31,000 / yr', deadline: '01 February', url: 'https://www.gatech.edu' },
+  { id: 6, country: 'United States', flag: '🇺🇸', name: 'University of Illinois Urbana-Champaign', program: 'M.S. Mechanical Engineering', degree: 'Masters', discipline: 'Mechanical', tuition: '$36,000 / yr', deadline: '15 December', url: 'https://illinois.edu' },
+
+  // Canada (DLIs with 3-Year PGWP)
+  { id: 7, country: 'Canada', flag: '🇨🇦', name: 'University of Alberta', program: 'M.Sc. Computing Science', degree: 'Masters', discipline: 'CS & AI', tuition: 'CAD $19,000 / yr', deadline: '01 March', url: 'https://www.ualberta.ca' },
+  { id: 8, country: 'Canada', flag: '🇨🇦', name: 'McMaster University', program: 'M.Eng. Manufacturing Engineering', degree: 'Masters', discipline: 'Mechanical', tuition: 'CAD $28,000 / yr', deadline: '30 April', url: 'https://www.mcmaster.ca' },
+
+  // UK (1-Year Master & 2-Year Graduate Route)
+  { id: 9, country: 'United Kingdom', flag: '🇬🇧', name: 'University of Manchester', program: 'M.Sc. Advanced Computer Science', degree: 'Masters', discipline: 'CS & AI', tuition: '£33,000 (1 Year Total)', deadline: 'Rolling / May', url: 'https://www.manchester.ac.uk' },
+  { id: 10, country: 'United Kingdom', flag: '🇬🇧', name: 'University of Sheffield', program: 'M.Sc. Mechanical Engineering', degree: 'Masters', discipline: 'Mechanical', tuition: '£29,000 (1 Year Total)', deadline: 'June Annual', url: 'https://www.sheffield.ac.uk' },
+
+  // Ireland (2-Year Stamp 1G Stayback)
+  { id: 11, country: 'Ireland', flag: '🇮🇪', name: 'University College Dublin (UCD)', program: 'M.Sc. Computer Science (Negotiated Learning)', degree: 'Masters', discipline: 'CS & AI', tuition: '€27,000 (1 Year)', deadline: '31 March', url: 'https://www.ucd.ie' },
+  { id: 12, country: 'Ireland', flag: '🇮🇪', name: 'Trinity College Dublin', program: 'M.Sc. Operations & Supply Chain', degree: 'Masters', discipline: 'Management', tuition: '€23,500 (1 Year)', deadline: '30 June', url: 'https://www.tcd.ie' }
+];
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('pathways');
-  const [selectedCountryFilter, setSelectedCountryFilter] = useState('all');
-  const [budgetFilter, setBudgetFilter] = useState('all');
-  const [fieldFilter, setFieldFilter] = useState('all');
-  const [userName, setUserName] = useState('');
+  // LocalStorage state hooks
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('migravo_tab') || 'pathways');
+  const [selectedCountryFilter, setSelectedCountryFilter] = useState(() => localStorage.getItem('migravo_country') || 'all');
+  const [budgetFilter, setBudgetFilter] = useState(() => localStorage.getItem('migravo_budget') || 'all');
+  const [fieldFilter, setFieldFilter] = useState(() => localStorage.getItem('migravo_field') || 'all');
+  const [userName, setUserName] = useState(() => localStorage.getItem('migravo_name') || '');
   const [showShareModal, setShowShareModal] = useState(false);
 
-  // References for horizontal scroll containers
+  // University Directory Search state
+  const [uniSearch, setUniSearch] = useState('');
+  const [uniCountryFilter, setUniCountryFilter] = useState('All');
+  const [uniDisciplineFilter, setUniDisciplineFilter] = useState('All');
+
+  // Horizontal scroll container refs
   const navScrollRef = useRef(null);
   const countryScrollRef = useRef(null);
 
-  // Relocation Roadmap State
-  const [checklist, setChecklist] = useState([
-    { id: 1, title: 'IELTS / PTE / TOEFL Academic Language Exam', done: true, phase: 'Stage 1: Testing' },
-    { id: 2, title: 'Document & Degree Verification (APS / WES / ENIC)', done: true, phase: 'Stage 1: Credentials' },
-    { id: 3, title: 'Statement of Purpose (SOP) & Academic LORs', done: false, phase: 'Stage 2: Applications' },
-    { id: 4, title: 'Direct University Admissions Submission', done: false, phase: 'Stage 2: Filing' },
-    { id: 5, title: 'Financial Proof: Blocked Account / GIC / Bank Balance', done: false, phase: 'Stage 3: Funding' },
-    { id: 6, title: 'Education Loan Sanction Letter (Section 80E)', done: false, phase: 'Stage 3: Loan' },
-    { id: 7, title: 'VFS / Embassy Biometrics & Visa Interview', done: false, phase: 'Stage 4: Visa' },
-    { id: 8, title: 'Post-Study Work Permit Application (OPT/PGWP/485)', done: false, phase: 'Stage 5: Career' },
-    { id: 9, title: 'Permanent Residency Filing (PR / Blue Card / CEC)', done: false, phase: 'Stage 5: Settlement' },
-    { id: 10, title: 'OCI Card Registration (Upon Acquiring Foreign Passport)', done: false, phase: 'Stage 5: Dual Origin' },
-  ]);
+  // Relocation Roadmap State initialized from LocalStorage
+  const [checklist, setChecklist] = useState(() => {
+    const saved = localStorage.getItem('migravo_checklist');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 1, title: 'IELTS / PTE / TOEFL Academic Language Exam', done: true, phase: 'Stage 1: Testing' },
+      { id: 2, title: 'Document & Degree Verification (APS / WES / ENIC)', done: true, phase: 'Stage 1: Credentials' },
+      { id: 3, title: 'Statement of Purpose (SOP) & Academic LORs', done: false, phase: 'Stage 2: Applications' },
+      { id: 4, title: 'Direct University Admissions Submission', done: false, phase: 'Stage 2: Filing' },
+      { id: 5, title: 'Financial Proof: Blocked Account / GIC / Bank Balance', done: false, phase: 'Stage 3: Funding' },
+      { id: 6, title: 'Education Loan Sanction Letter (Section 80E)', done: false, phase: 'Stage 3: Loan' },
+      { id: 7, title: 'VFS / Embassy Biometrics & Visa Interview', done: false, phase: 'Stage 4: Visa' },
+      { id: 8, title: 'Post-Study Work Permit Application (OPT/PGWP/485)', done: false, phase: 'Stage 5: Career' },
+      { id: 9, title: 'Permanent Residency Filing (PR / Blue Card / CEC)', done: false, phase: 'Stage 5: Settlement' },
+      { id: 10, title: 'OCI Card Registration (Upon Acquiring Foreign Passport)', done: false, phase: 'Stage 5: Dual Origin' },
+    ];
+  });
+
+  // LocalStorage sync effects
+  useEffect(() => {
+    localStorage.setItem('migravo_tab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    localStorage.setItem('migravo_country', selectedCountryFilter);
+  }, [selectedCountryFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('migravo_budget', budgetFilter);
+  }, [budgetFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('migravo_field', fieldFilter);
+  }, [fieldFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('migravo_name', userName);
+  }, [userName]);
+
+  useEffect(() => {
+    localStorage.setItem('migravo_checklist', JSON.stringify(checklist));
+  }, [checklist]);
 
   const toggleChecklist = (id) => {
     setChecklist(prev => prev.map(item => item.id === id ? { ...item, done: !item.done } : item));
@@ -249,6 +311,13 @@ export default function App() {
     const matchesBudget = budgetFilter === 'all' || item.budgetTier === budgetFilter;
     const matchesField = fieldFilter === 'all' || item.popularDisciplines.includes(fieldFilter);
     return matchesCountry && matchesBudget && matchesField;
+  });
+
+  const filteredUniversities = GLOBAL_UNIVERSITIES.filter(u => {
+    const matchesSearch = u.name.toLowerCase().includes(uniSearch.toLowerCase()) || u.program.toLowerCase().includes(uniSearch.toLowerCase());
+    const matchesCountry = uniCountryFilter === 'All' || u.country === uniCountryFilter;
+    const matchesDiscipline = uniDisciplineFilter === 'All' || u.discipline === uniDisciplineFilter;
+    return matchesSearch && matchesCountry && matchesDiscipline;
   });
 
   const scrollNav = (direction) => {
@@ -292,6 +361,7 @@ export default function App() {
     { id: 'pathways', label: '🌍 Global Pathways', icon: Globe2 },
     { id: 'loans', label: '💰 Education Loan & 80E', icon: Landmark },
     { id: 'aps', label: '🛡️ Credential Vault (APS/WES)', icon: ShieldCheck },
+    { id: 'unifinder', label: '🎓 Global University Finder', icon: GraduationCap },
     { id: 'sop', label: '✍️ SOP & LOR Builder', icon: FileEdit },
     { id: 'visa', label: '📅 Visa & VFS Tracker', icon: Calendar },
     { id: 'living', label: '🏙️ City Cost & Earnings', icon: DollarSign },
@@ -390,7 +460,7 @@ export default function App() {
       {/* Main Content Area */}
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
-        {/* Global Hero Banner */}
+        {/* Hero Banner */}
         <section className="bg-gradient-to-br from-[#0D3B43] via-[#0E535D] to-[#008779] text-white p-6 sm:p-8 rounded-3xl shadow-xl shadow-[#0D3B43]/15 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-xl">
             <span className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-bold text-[#E5A93C] border border-white/15">
@@ -400,7 +470,7 @@ export default function App() {
               Global Study & Relocation Pathways.
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-              Standardized, verified criteria across top destinations. Prepare your entire dossier without agent markups.
+              Standardized criteria across top study destinations. Prepare your application dossier, financial verification, and visa filings without broker markups.
             </p>
           </div>
 
@@ -607,16 +677,100 @@ export default function App() {
         {/* TAB 3: CREDENTIAL & APS VAULT */}
         {activeTab === 'aps' && <GlobalVerificationVault />}
 
-        {/* TAB 4: SOP & LOR BUILDER */}
+        {/* TAB 4: GLOBAL PUBLIC UNIVERSITY DIRECTORY */}
+        {activeTab === 'unifinder' && (
+          <div className="space-y-5">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h2 className="text-base font-extrabold text-[#0D3B43] flex items-center gap-2">
+                    <GraduationCap className="text-[#008779] w-5 h-5" /> Global Public University Directory
+                  </h2>
+                  <p className="text-xs text-slate-500">Curated high-ROI programs across Germany, USA, Canada, UK, and Ireland.</p>
+                </div>
+                <span className="text-xs font-bold bg-teal-50 text-[#008779] px-3 py-1 rounded-full border border-teal-200 self-start sm:self-auto">
+                  {filteredUniversities.length} Programs Matched
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3.5 top-3 text-slate-400" />
+                  <input
+                    type="text"
+                    value={uniSearch}
+                    onChange={(e) => setUniSearch(e.target.value)}
+                    placeholder="Search university or discipline..."
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779]"
+                  />
+                </div>
+
+                <select
+                  value={uniCountryFilter}
+                  onChange={(e) => setUniCountryFilter(e.target.value)}
+                  className="py-2 px-3 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779] cursor-pointer"
+                >
+                  <option value="All">All Countries</option>
+                  <option value="Germany">Germany (Zero Tuition)</option>
+                  <option value="United States">USA (STEM OPT)</option>
+                  <option value="Canada">Canada (PGWP)</option>
+                  <option value="United Kingdom">United Kingdom (1-Yr)</option>
+                  <option value="Ireland">Ireland (Stamp 1G)</option>
+                </select>
+
+                <select
+                  value={uniDisciplineFilter}
+                  onChange={(e) => setUniDisciplineFilter(e.target.value)}
+                  className="py-2 px-3 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779] cursor-pointer"
+                >
+                  <option value="All">All Disciplines</option>
+                  <option value="CS & AI">Computer Science, AI & Cyber</option>
+                  <option value="Mechanical">Mechanical & Automotive</option>
+                  <option value="Management">Management & Supply Chain</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredUniversities.map(item => (
+                <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-[#008779] bg-teal-50 px-2 py-0.5 rounded">
+                        {item.flag} {item.country} • {item.discipline}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500">Deadline: {item.deadline}</span>
+                    </div>
+                    <h3 className="font-extrabold text-slate-900 text-sm mt-2">{item.name}</h3>
+                    <p className="text-xs font-semibold text-slate-600">{item.program}</p>
+                    <div className="mt-2 text-xs font-bold text-emerald-700 bg-emerald-50/60 p-2 rounded-xl">
+                      Tuition: {item.tuition}
+                    </div>
+                  </div>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-[#0D3B43] hover:bg-[#09262C] text-white text-xs py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 transition active:scale-95"
+                  >
+                    Direct University Admissions <ExternalLink size={12} />
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: SOP & LOR BUILDER */}
         {activeTab === 'sop' && <SopBuilder />}
 
-        {/* TAB 5: VISA & VFS SLOT TRACKER */}
+        {/* TAB 6: VISA & VFS SLOT TRACKER */}
         {activeTab === 'visa' && <VisaSlotTracker />}
 
-        {/* TAB 6: CITY COST & EARNING MATCHER */}
+        {/* TAB 7: CITY COST & EARNING MATCHER */}
         {activeTab === 'living' && <CostOfLivingMatcher />}
 
-        {/* TAB 7: RELOCATION ROADMAP */}
+        {/* TAB 8: RELOCATION ROADMAP */}
         {activeTab === 'checklist' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-2">
@@ -661,7 +815,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 8: STUDENT SUPPORT DESK */}
+        {/* TAB 9: STUDENT SUPPORT DESK */}
         {activeTab === 'support' && (
           <div className="space-y-6">
             <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-6">
