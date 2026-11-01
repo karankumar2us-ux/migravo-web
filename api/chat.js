@@ -23,21 +23,18 @@ export default async function handler(req) {
 Your core mission: Help students apply directly to top public universities (especially €0 tuition in Germany, 3-year STEM OPT in USA, Canadian DLIs, and Australian PR) without paying ₹50,000+ to consultancies.
 Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs or clear bullet points. Maintain context from earlier parts of the conversation.`;
 
-    // Map preceding chat history to the Gemini format
-    const contents = [];
-    
-    // Inject system instructions as the preamble of the conversation
-    contents.push({
-      role: 'user',
-      parts: [{ text: systemPrompt }]
-    });
-    contents.push({
-      role: 'model',
-      parts: [{ text: 'Understood. I am the Migravo AI Counselor, ready to guide Indian students with factual, zero-broker relocation advice.' }]
-    });
+    const contents = [
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }]
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'Understood. I am the Migravo AI Counselor, ready to guide Indian students with factual, zero-broker relocation advice.' }]
+      }
+    ];
 
     if (Array.isArray(history)) {
-      // Use the last 6 turns to keep token size low and latency fast
       const recentHistory = history.slice(-6);
       for (const turn of recentHistory) {
         if (turn.text && turn.text.trim()) {
@@ -49,29 +46,50 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
       }
     }
 
-    // Append the current student prompt
     contents.push({
       role: 'user',
       parts: [{ text: message }]
     });
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            maxOutputTokens: 450
-          }
-        })
-      }
-    );
+    // Primary and fallback models for high availability
+    const candidateModels = ['gemini-3.8-flash', 'gemini-2.5-flash'];
+    let response = null;
 
-    if (!response.ok) {
-      const err = await response.text();
-      return new Response(JSON.stringify({ error: err || 'API request failed' }), { status: response.status });
+    for (const model of candidateModels) {
+      try {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents,
+              generationConfig: {
+                maxOutputTokens: 450
+              }
+            })
+          }
+        );
+
+        if (response.ok) {
+          break; // Connected successfully, stream back response
+        }
+
+        // If high demand 503 or rate limit 429, loop to fallback model
+        if (response.status === 503 || response.status === 429) {
+          console.warn(`Model ${model} experienced high demand (${response.status}). Trying fallback...`);
+          continue;
+        } else {
+          break;
+        }
+      } catch (e) {
+        console.error(`Fetch failed for ${model}:`, e);
+      }
+    }
+
+    if (!response || !response.ok) {
+      const err = await response?.text();
+      return new Response(JSON.stringify({ error: 'All AI models are currently at peak capacity. Please retry in a few seconds.' }), { status: 503 });
     }
 
     const encoder = new TextEncoder();
