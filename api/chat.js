@@ -19,7 +19,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,7 +31,6 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
             }
           ],
           generationConfig: {
-            temperature: 0.6,
             maxOutputTokens: 600
           }
         })
