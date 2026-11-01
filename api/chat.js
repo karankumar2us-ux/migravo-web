@@ -5,18 +5,27 @@ export const config = {
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+      status: 405, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   }
 
   try {
     const { message, history } = await req.json();
     if (!message || typeof message !== 'string') {
-      return new Response(JSON.stringify({ error: 'Message is required' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Message is required' }), { 
+        status: 400, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY is not configured in Vercel.' }), { status: 500 });
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY is not configured in Vercel settings.' }), { 
+        status: 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
     }
 
     const systemPrompt = `You are the Migravo AI Counselor, an authoritative, zero-consultancy study abroad and global relocation advisor for Indian students.
@@ -51,9 +60,10 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
       parts: [{ text: message }]
     });
 
-    // Primary and fallback models for high availability
+    // Supported models in priority order
     const candidateModels = ['gemini-3.8-flash', 'gemini-2.5-flash'];
     let response = null;
+    let lastErrorText = '';
 
     for (const model of candidateModels) {
       try {
@@ -72,24 +82,30 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
         );
 
         if (response.ok) {
-          break; // Connected successfully, stream back response
-        }
-
-        // If high demand 503 or rate limit 429, loop to fallback model
-        if (response.status === 503 || response.status === 429) {
-          console.warn(`Model ${model} experienced high demand (${response.status}). Trying fallback...`);
-          continue;
-        } else {
           break;
+        } else {
+          lastErrorText = await response.text();
+          console.warn(`Model ${model} returned ${response.status}:`, lastErrorText);
         }
       } catch (e) {
-        console.error(`Fetch failed for ${model}:`, e);
+        lastErrorText = e.message;
+        console.error(`Fetch exception for ${model}:`, e);
       }
     }
 
     if (!response || !response.ok) {
-      const err = await response?.text();
-      return new Response(JSON.stringify({ error: 'All AI models are currently at peak capacity. Please retry in a few seconds.' }), { status: 503 });
+      let friendlyError = 'Gemini API temporarily busy. Please retry in a moment.';
+      try {
+        const parsed = JSON.parse(lastErrorText);
+        friendlyError = parsed.error?.message || friendlyError;
+      } catch (e) {
+        if (lastErrorText) friendlyError = lastErrorText;
+      }
+
+      return new Response(JSON.stringify({ error: friendlyError }), { 
+        status: response?.status || 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const encoder = new TextEncoder();
@@ -108,7 +124,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
                 controller.enqueue(encoder.encode(token));
               }
             } catch (e) {
-              // Ignore partial frame parse errors
+              // Ignore partial frames
             }
           }
         }
@@ -123,6 +139,9 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
     });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message || 'Internal server error' }), { status: 500 });
+    return new Response(JSON.stringify({ error: err.message || 'Internal server error' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

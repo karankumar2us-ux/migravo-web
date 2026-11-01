@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Compass, Award, CheckSquare, MessageSquareCode, 
+  Compass, Award, CheckSquare, 
   ExternalLink, Sparkles, Send, Layers, CheckCircle2, 
   Share2, Globe2, X, Landmark, ArrowUpRight, Zap, Loader2,
   GraduationCap, Search, BookOpen, Download, Printer
@@ -278,8 +278,14 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to connect to AI Counselor');
+        let serverErrorMsg = 'Failed to connect to AI Counselor';
+        try {
+          const errorData = await res.json();
+          if (errorData?.error) serverErrorMsg = errorData.error;
+        } catch (e) {
+          // Response body was not JSON
+        }
+        throw new Error(serverErrorMsg);
       }
 
       const reader = res.body.getReader();
@@ -306,7 +312,7 @@ export default function App() {
         const lastIdx = updated.length - 1;
         updated[lastIdx] = {
           ...updated[lastIdx],
-          text: `⚠️ ${err.message || 'Network connection issue. Please check your connection and try again.'}`
+          text: `⚠️ ${err.message}`
         };
         return updated;
       });
@@ -450,7 +456,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Always visible direct shortcut button to AI Advisor */}
+            {/* The single primary AI Advisor button */}
             <button 
               onClick={() => setActiveTab('advisor')}
               className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition active:scale-95 ${
@@ -482,7 +488,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Navigation Tabs with Smooth Horizontal Overflow */}
+        {/* Navigation Tabs - AI Advisor removed from here to eliminate duplication */}
         <div className="border-t border-slate-100 bg-white">
           <div className="max-w-6xl mx-auto px-4 flex items-center">
             <div className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth">
@@ -492,7 +498,6 @@ export default function App() {
                 { id: 'chancenkarte', label: 'Germany Chancenkarte (6 Pts)', icon: Award },
                 { id: 'scholarships', label: 'Govt Scholarships', icon: Layers },
                 { id: 'checklist', label: 'Relocation Roadmap', icon: CheckSquare },
-                { id: 'advisor', label: 'AI Advisor (Gemini Live)', icon: MessageSquareCode },
               ].map(tab => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.id;
@@ -1081,7 +1086,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 6: AI MOBILITY ADVISOR (MULTI-TURN STREAMING GEMINI) */}
+        {/* TAB 6: AI MOBILITY ADVISOR (ACTIVATED VIA TOP HEADER BUTTON) */}
         {activeTab === 'advisor' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[580px]">
             <div className="bg-[#0D3B43] text-white p-4 flex items-center justify-between">
