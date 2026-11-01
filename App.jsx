@@ -11,7 +11,7 @@ import {
 import LoanCalculator from './src/components/LoanCalculator';
 import GlobalVerificationVault from './src/components/GlobalVerificationVault';
 
-// Comprehensive 12-Country Global Destination Database
+// Comprehensive Global Destination Database
 const DESTINATIONS = [
   {
     id: 'us',
@@ -199,7 +199,7 @@ const DESTINATIONS = [
     workPermit: '1-Year Long Term Visit Pass (LTVP) + Employment Pass (EP)',
     prTimeline: 'PTS (Professionals/Technical Personnel and Skilled Workers) PR Scheme',
     workRights: '16 hrs/week for Ministry of Manpower approved institutions',
-    topFields: 'Artificial Intelligence, Quantitative Finance, Supply Chain, Semi-conductors',
+    topFields: 'Artificial Intelligence, Quantitative Finance, Supply Chain, Semiconductors',
     officialPortal: 'https://www.mom.gov.sg',
     portalName: 'Singapore Ministry of Manpower',
     budgetTier: 'high',
@@ -207,7 +207,7 @@ const DESTINATIONS = [
   }
 ];
 
-// Curated public university program directory (€0 tuition, English-taught)
+// Public university directory
 const UNIVERSITY_PROGRAMS = [
   {
     id: 1,
@@ -376,7 +376,7 @@ export default function App() {
   const handleWhatsAppShare = () => {
     const candidateName = userName.trim() ? `${userName.trim()}'s` : "My";
     const text = encodeURIComponent(
-      `✈️ ${candidateName} Global Mobility Evaluation on Migravo:\n🎯 Readiness Score: ${readinessPercent}%\n🌍 12-Country Database: Transparent Anti-Broker Guide\nCheck your score without consultant fees: https://migravo-web.vercel.app`
+      `✈️ ${candidateName} Global Mobility Evaluation on Migravo:\n🎯 Readiness Score: ${readinessPercent}%\n🌍 Transparent Anti-Broker Guide\nCheck your score without consultant fees: https://migravo-web.vercel.app`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -478,8 +478,8 @@ export default function App() {
               <span className="text-xl font-extrabold tracking-tight text-[#0D3B43]">
                 Migra<span className="text-[#008779]">vo</span>
               </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-bold tracking-wider text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-md">
-                12-Country Matrix
+              <span className="hidden sm:inline-block ml-2 text-[10px] font-bold tracking-wider text-[#008779] uppercase bg-teal-50 px-2.5 py-0.5 rounded-md border border-teal-200/60">
+                Zero-Broker Hub
               </span>
             </div>
           </div>
@@ -521,9 +521,9 @@ export default function App() {
           <div className="max-w-6xl mx-auto px-4 flex items-center">
             <div className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth no-scrollbar">
               {[
-                { id: 'pathways', label: '🌍 12-Country Matrix' },
+                { id: 'pathways', label: '🌍 Global Country Pathways' },
                 { id: 'loans', label: '💰 Education Loan & Tax Calc' },
-                { id: 'aps', label: '🛡️ All-Country Verification Vault (APS/WES/ENIC)' },
+                { id: 'aps', label: '🛡️ Credential & APS Vault' },
                 { id: 'unifinder', label: '🎓 Public University Directory' },
                 { id: 'scholarships', label: '📜 Govt Scholarships' },
                 { id: 'checklist', label: '🗺️ Relocation Roadmap' },
@@ -559,10 +559,10 @@ export default function App() {
               <Zap size={13} /> Worldwide Direct Admissions • Zero Consultancy Cut
             </span>
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-snug">
-              Compare 12 Global Study & Relocation Pathways.
+              Global Study & Relocation Pathways.
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-              Standardized comparison across the <strong className="text-white">USA, Germany, UK, Canada, Australia, Ireland, Netherlands, France, Sweden, NZ, Italy, and Singapore</strong>.
+              Standardized, transparent criteria across the USA, Germany, UK, Canada, Australia, Ireland, Netherlands, France, Sweden, NZ, Italy, and Singapore.
             </p>
           </div>
 
@@ -581,7 +581,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* TAB 1: 12-COUNTRY PATHWAYS */}
+        {/* TAB 1: GLOBAL COUNTRY PATHWAYS */}
         {activeTab === 'pathways' && (
           <div className="space-y-5">
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
@@ -593,14 +593,14 @@ export default function App() {
                   <p className="text-xs text-slate-500">Filter by specific country or compare global destinations side-by-side.</p>
                 </div>
                 <span className="text-xs font-bold text-[#008779] bg-teal-50 px-3 py-1 rounded-full border border-teal-200 self-start sm:self-auto">
-                  {filteredDestinations.length} of 12 Countries Showing
+                  {filteredDestinations.length} Countries Showing
                 </span>
               </div>
 
-              {/* 12 Country Chips */}
+              {/* Country Selection Chips */}
               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                 {[
-                  { id: 'all', label: 'All 12 Countries', flag: '🌐' },
+                  { id: 'all', label: 'All Countries', flag: '🌐' },
                   { id: 'us', label: 'USA', flag: '🇺🇸' },
                   { id: 'de', label: 'Germany', flag: '🇩🇪' },
                   { id: 'uk', label: 'UK', flag: '🇬🇧' },
@@ -745,7 +745,7 @@ export default function App() {
         {/* TAB 2: LOAN & TAX CALCULATOR */}
         {activeTab === 'loans' && <LoanCalculator />}
 
-        {/* TAB 3: ALL-COUNTRY CREDENTIAL & APS VAULT */}
+        {/* TAB 3: CREDENTIAL & APS VAULT */}
         {activeTab === 'aps' && <GlobalVerificationVault />}
 
         {/* TAB 4: PUBLIC UNIVERSITY FINDER */}
@@ -1070,7 +1070,7 @@ export default function App() {
                   </div>
                   <div className="bg-white/10 p-2.5 rounded-xl">
                     <span className="text-teal-200 block text-[10px] font-medium">Destinations Audited</span>
-                    <span className="text-xl font-black text-white">12 Countries</span>
+                    <span className="text-xl font-black text-white">Global Database</span>
                   </div>
                 </div>
 
