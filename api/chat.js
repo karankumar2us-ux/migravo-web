@@ -1,117 +1,94 @@
 export const config = {
   runtime: 'edge',
-  regions: ['bom1'],
 };
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
-      status: 405, 
-      headers: { 'Content-Type': 'application/json' } 
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   try {
     const { message, history } = await req.json();
     if (!message || typeof message !== 'string') {
-      return new Response(JSON.stringify({ error: 'Message is required' }), { 
-        status: 400, 
-        headers: { 'Content-Type': 'application/json' } 
+      return new Response(JSON.stringify({ error: 'Message is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY is not configured in Vercel settings.' }), { 
-        status: 500, 
-        headers: { 'Content-Type': 'application/json' } 
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY is not set.' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const systemText = `You are the Migravo AI Counselor, an authoritative, zero-consultancy study abroad and global relocation advisor for Indian students.
+    const systemPrompt = `You are the Migravo AI Counselor, an authoritative, zero-consultancy study abroad and global relocation advisor for Indian students.
 Your core mission: Help students apply directly to top public universities (especially €0 tuition in Germany, 3-year STEM OPT in USA, Canadian DLIs, and Australian PR) without paying ₹50,000+ to consultancies.
-Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs or clear bullet points.`;
+Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs or clear bullet points.`;
 
-    // Build properly alternating multi-turn history: user -> model -> user -> model
     const contents = [];
 
+    // Sanitize multi-turn history strictly alternating: user -> model
     if (Array.isArray(history)) {
       let expectedRole = 'user';
-      for (const turn of history) {
+      for (const turn of history.slice(-4)) {
         if (!turn.text || !turn.text.trim()) continue;
         const currentRole = turn.sender === 'user' ? 'user' : 'model';
-        
-        // Strict alternation check: Gemini rejects consecutive user-user or model-model
+
         if (currentRole === expectedRole) {
           contents.push({
             role: currentRole,
-            parts: [{ text: turn.text.trim() }]
+            parts: [{ text: turn.text.trim() }],
           });
           expectedRole = expectedRole === 'user' ? 'model' : 'user';
         } else if (contents.length > 0 && currentRole === 'user' && expectedRole === 'model') {
-          // If two user turns in a row, combine them into one turn
           contents[contents.length - 1].parts[0].text += `\n${turn.text.trim()}`;
         }
       }
 
-      // If last history element was 'user', pop it so the incoming message becomes the final 'user'
       if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
         contents.pop();
       }
     }
 
-    // Append the current student prompt as the final user turn
     contents.push({
       role: 'user',
-      parts: [{ text: message.trim() }]
+      parts: [{ text: message.trim() }],
     });
 
-    const candidateModels = ['gemini-2.5-flash', 'gemini-3.8-flash'];
-    let response = null;
-    let lastErrorText = '';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 9000);
 
-    for (const model of candidateModels) {
-      try {
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              systemInstruction: {
-                parts: [{ text: systemText }]
-              },
-              contents,
-              generationConfig: {
-                maxOutputTokens: 450
-              }
-            })
-          }
-        );
-
-        if (response.ok) {
-          break;
-        } else {
-          lastErrorText = await response.text();
-          console.warn(`Model ${model} returned ${response.status}:`, lastErrorText);
-        }
-      } catch (e) {
-        lastErrorText = e.message;
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemPrompt }],
+          },
+          contents,
+          generationConfig: {
+            maxOutputTokens: 350,
+          },
+        }),
       }
-    }
+    );
 
-    if (!response || !response.ok) {
-      let friendlyError = 'Gemini API temporarily busy. Please retry in a moment.';
-      try {
-        const parsed = JSON.parse(lastErrorText);
-        friendlyError = parsed.error?.message || friendlyError;
-      } catch (e) {
-        if (lastErrorText) friendlyError = lastErrorText;
-      }
+    clearTimeout(timeoutId);
 
-      return new Response(JSON.stringify({ error: friendlyError }), { 
-        status: response?.status || 500,
-        headers: { 'Content-Type': 'application/json' }
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      return new Response(JSON.stringify({ error: `Gemini error (${geminiRes.status}): ${errText}` }), {
+        status: geminiRes.status,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -130,25 +107,32 @@ Be direct, concise, factual, and helpful. Keep responses to 2-3 crisp paragraphs
               if (token) {
                 controller.enqueue(encoder.encode(token));
               }
-            } catch (e) {
+            } catch {
               // Ignore partial frames
             }
           }
         }
-      }
+      },
     });
 
-    return new Response(response.body.pipeThrough(transformStream), {
+    return new Response(geminiRes.body.pipeThrough(transformStream), {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked'
-      }
+        'Transfer-Encoding': 'chunked',
+      },
     });
-
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message || 'Internal server error' }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const isTimeout = err.name === 'AbortError';
+    return new Response(
+      JSON.stringify({
+        error: isTimeout
+          ? 'Upstream connection timed out after 9s. Please try again.'
+          : err.message || 'Internal server error',
+      }),
+      {
+        status: 504,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

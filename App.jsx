@@ -252,7 +252,7 @@ export default function App() {
     }
   }, [messages, isLoadingAi, activeTab]);
 
-  // Robust Error-Surfacing Query Handler
+  // Real-Time Streaming Edge Consumer
   const sendQuery = async (text) => {
     const query = text || inputMsg;
     if (!query.trim() || isLoadingAi) return;
@@ -277,27 +277,34 @@ export default function App() {
         })
       });
 
-      const rawText = await res.text();
-      let data = {};
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        throw new Error(`Server returned HTTP ${res.status}: ${rawText.slice(0, 100)}`);
-      }
-
       if (!res.ok) {
-        throw new Error(data.error || `Error ${res.status}: Request failed`);
+        const errText = await res.text();
+        let errMsg = `Server returned HTTP ${res.status}`;
+        try {
+          const parsed = JSON.parse(errText);
+          if (parsed.error) errMsg = parsed.error;
+        } catch {}
+        throw new Error(errMsg);
       }
 
-      setMessages(prev => {
-        const updated = [...prev];
-        const lastIdx = updated.length - 1;
-        updated[lastIdx] = {
-          ...updated[lastIdx],
-          text: data.reply || 'No response received.'
-        };
-        return updated;
-      });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          updated[lastIdx] = {
+            ...updated[lastIdx],
+            text: (updated[lastIdx].text || '') + chunk
+          };
+          return updated;
+        });
+      }
 
     } catch (err) {
       setMessages(prev => {
@@ -481,7 +488,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Navigation Tabs - AI Advisor removed from here to eliminate duplication */}
+        {/* Navigation Tabs */}
         <div className="border-t border-slate-100 bg-white">
           <div className="max-w-6xl mx-auto px-4 flex items-center">
             <div className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth">
