@@ -21,7 +21,7 @@ export default async function handler(req) {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY is not set.' }), {
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY is not configured in Vercel settings.' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -33,7 +33,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
 
     const contents = [];
 
-    // Sanitize multi-turn history strictly alternating: user -> model
+    // Strictly alternate turns: user -> model -> user -> model
     if (Array.isArray(history)) {
       let expectedRole = 'user';
       for (const turn of history.slice(-4)) {
@@ -64,8 +64,9 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 9000);
 
+    // Call active model: gemini-3.8-flash
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,7 +87,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      return new Response(JSON.stringify({ error: `Gemini error (${geminiRes.status}): ${errText}` }), {
+      return new Response(JSON.stringify({ error: `Gemini API error (${geminiRes.status}): ${errText}` }), {
         status: geminiRes.status,
         headers: { 'Content-Type': 'application/json' },
       });
