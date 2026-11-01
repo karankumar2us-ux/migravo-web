@@ -424,7 +424,7 @@ export default function App() {
 
             <div 
               ref={navScrollRef} 
-              className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent"
+              className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth no-scrollbar"
             >
               {tabsList.map(tab => {
                 const Icon = tab.icon;
@@ -517,7 +517,7 @@ export default function App() {
 
                 <div 
                   ref={countryScrollRef} 
-                  className="flex gap-2 overflow-x-auto pb-1 w-full scroll-smooth scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent"
+                  className="flex gap-2 overflow-x-auto pb-1 w-full scroll-smooth no-scrollbar"
                 >
                   {[
                     { id: 'all', label: 'All Countries', flag: '🌐' },
