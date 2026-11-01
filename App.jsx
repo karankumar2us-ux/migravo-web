@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
-  Compass, Award, CheckSquare, 
+  Compass, CheckSquare, 
   ExternalLink, Layers, CheckCircle2, 
   Share2, Globe2, X, Landmark, ArrowUpRight, Zap,
-  GraduationCap, Search, BookOpen, Download, Printer,
-  Headphones, MessageCircle, Mail, HelpCircle, PhoneCall,
-  ShieldCheck, ArrowRight, DollarSign, Calendar, FileEdit
+  Search, BookOpen, Download, Printer,
+  Headphones, MessageCircle, Mail, HelpCircle,
+  ShieldCheck, ArrowRight, DollarSign, Calendar, FileEdit,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 import LoanCalculator from './src/components/LoanCalculator';
@@ -218,9 +219,9 @@ export default function App() {
   const [userName, setUserName] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
 
-  // Customer Support Form State
-  const [supportName, setSupportName] = useState('');
-  const [supportQuery, setSupportQuery] = useState('');
+  // References for horizontal scroll containers
+  const navScrollRef = useRef(null);
+  const countryScrollRef = useRef(null);
 
   // Relocation Roadmap State
   const [checklist, setChecklist] = useState([
@@ -250,6 +251,24 @@ export default function App() {
     return matchesCountry && matchesBudget && matchesField;
   });
 
+  const scrollNav = (direction) => {
+    if (navScrollRef.current) {
+      navScrollRef.current.scrollBy({
+        left: direction === 'left' ? -260 : 260,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollCountries = (direction) => {
+    if (countryScrollRef.current) {
+      countryScrollRef.current.scrollBy({
+        left: direction === 'left' ? -220 : 220,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   const handleWhatsAppShare = () => {
     const candidateName = userName.trim() ? `${userName.trim()}'s` : "My";
     const text = encodeURIComponent(
@@ -259,19 +278,26 @@ export default function App() {
   };
 
   const handleSupportWhatsApp = () => {
-    const name = supportName.trim() || 'Student';
-    const query = supportQuery.trim() || 'I need help navigating admission / visa pathways.';
-    const text = encodeURIComponent(`Hello Migravo Team!\nMy name is ${name}.\nQuery: ${query}`);
+    const text = encodeURIComponent("Hello Migravo Team! I need guidance with my study abroad dossier.");
     window.open(`https://api.whatsapp.com/send?phone=919876543210&text=${text}`, '_blank');
   };
 
   const handleSupportEmail = () => {
-    const name = supportName.trim() || 'Student';
-    const query = supportQuery.trim() || 'I need guidance regarding my application dossier.';
-    const subject = encodeURIComponent(`[Migravo Assistance] Query from ${name}`);
-    const body = encodeURIComponent(`Name: ${name}\nReadiness: ${readinessPercent}%\nQuery:\n${query}`);
+    const subject = encodeURIComponent("[Migravo Support] Candidate Guidance Request");
+    const body = encodeURIComponent(`Candidate: ${userName || 'Applicant'}\nReadiness: ${readinessPercent}%`);
     window.location.href = `mailto:support@migravo.in?subject=${subject}&body=${body}`;
   };
+
+  const tabsList = [
+    { id: 'pathways', label: '🌍 Global Pathways', icon: Globe2 },
+    { id: 'loans', label: '💰 Education Loan & 80E', icon: Landmark },
+    { id: 'aps', label: '🛡️ Credential Vault (APS/WES)', icon: ShieldCheck },
+    { id: 'sop', label: '✍️ SOP & LOR Builder', icon: FileEdit },
+    { id: 'visa', label: '📅 Visa & VFS Tracker', icon: Calendar },
+    { id: 'living', label: '🏙️ City Cost & Earnings', icon: DollarSign },
+    { id: 'checklist', label: '🗺️ Relocation Roadmap', icon: CheckSquare },
+    { id: 'support', label: '🎧 Student Support Desk', icon: Headphones },
+  ];
 
   return (
     <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans antialiased pb-24 selection:bg-[#008779] selection:text-white">
@@ -315,20 +341,22 @@ export default function App() {
           </div>
         </div>
 
-        {/* Modular Navigation Tabs */}
-        <div className="border-t border-slate-100 bg-white">
-          <div className="max-w-6xl mx-auto px-4 flex items-center">
-            <div className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth no-scrollbar">
-              {[
-                { id: 'pathways', label: '🌍 Global Pathways', icon: Globe2 },
-                { id: 'loans', label: '💰 Education Loan & 80E', icon: Landmark },
-                { id: 'aps', label: '🛡️ Credential Vault (APS/WES)', icon: ShieldCheck },
-                { id: 'sop', label: '✍️ SOP & LOR Builder', icon: FileEdit },
-                { id: 'visa', label: '📅 Visa & VFS Tracker', icon: Calendar },
-                { id: 'living', label: '🏙️ City Cost & Earnings', icon: DollarSign },
-                { id: 'checklist', label: '🗺️ Relocation Roadmap', icon: CheckSquare },
-                { id: 'support', label: '🎧 Student Support Desk', icon: Headphones },
-              ].map(tab => {
+        {/* Navigation Tabs with Left / Right Scroll Controls */}
+        <div className="border-t border-slate-100 bg-white relative">
+          <div className="max-w-6xl mx-auto px-4 flex items-center gap-1">
+            <button 
+              onClick={() => scrollNav('left')}
+              className="hidden sm:flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0"
+              title="Scroll tabs left"
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <div 
+              ref={navScrollRef} 
+              className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent"
+            >
+              {tabsList.map(tab => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.id;
                 return (
@@ -347,6 +375,14 @@ export default function App() {
                 );
               })}
             </div>
+
+            <button 
+              onClick={() => scrollNav('right')}
+              className="hidden sm:flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0"
+              title="Scroll tabs right"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
         </div>
       </header>
@@ -395,42 +431,64 @@ export default function App() {
                   <p className="text-xs text-slate-500">Filter by specific country or compare global destinations side-by-side.</p>
                 </div>
                 <span className="text-xs font-bold text-[#008779] bg-teal-50 px-3 py-1 rounded-full border border-teal-200 self-start sm:self-auto">
-                  {filteredDestinations.length} Countries Showing
+                  Global Database Active
                 </span>
               </div>
 
-              {/* Country Selection Chips */}
-              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                {[
-                  { id: 'all', label: 'All Countries', flag: '🌐' },
-                  { id: 'us', label: 'USA', flag: '🇺🇸' },
-                  { id: 'de', label: 'Germany', flag: '🇩🇪' },
-                  { id: 'uk', label: 'UK', flag: '🇬🇧' },
-                  { id: 'ca', label: 'Canada', flag: '🇨🇦' },
-                  { id: 'au', label: 'Australia', flag: '🇦🇺' },
-                  { id: 'ie', label: 'Ireland', flag: '🇮🇪' },
-                  { id: 'nl', label: 'Netherlands', flag: '🇳🇱' },
-                  { id: 'fr', label: 'France', flag: '🇫🇷' },
-                  { id: 'se', label: 'Sweden', flag: '🇸🇪' },
-                  { id: 'nz', label: 'New Zealand', flag: '🇳🇿' },
-                  { id: 'it', label: 'Italy', flag: '🇮🇹' },
-                  { id: 'sg', label: 'Singapore', flag: '🇸🇬' },
-                ].map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedCountryFilter(c.id)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition active:scale-95 ${
-                      selectedCountryFilter === c.id
-                        ? 'bg-[#0D3B43] text-white shadow-sm'
-                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/70'
-                    }`}
-                  >
-                    <span>{c.flag}</span>
-                    <span>{c.label}</span>
-                  </button>
-                ))}
+              {/* Country Selection Chips with Left/Right Scroll Arrows */}
+              <div className="relative flex items-center gap-1">
+                <button 
+                  onClick={() => scrollCountries('left')}
+                  className="hidden sm:flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0"
+                  title="Scroll countries left"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+
+                <div 
+                  ref={countryScrollRef} 
+                  className="flex gap-2 overflow-x-auto pb-1 w-full scroll-smooth scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent"
+                >
+                  {[
+                    { id: 'all', label: 'All Countries', flag: '🌐' },
+                    { id: 'us', label: 'USA', flag: '🇺🇸' },
+                    { id: 'de', label: 'Germany', flag: '🇩🇪' },
+                    { id: 'uk', label: 'UK', flag: '🇬🇧' },
+                    { id: 'ca', label: 'Canada', flag: '🇨🇦' },
+                    { id: 'au', label: 'Australia', flag: '🇦🇺' },
+                    { id: 'ie', label: 'Ireland', flag: '🇮🇪' },
+                    { id: 'nl', label: 'Netherlands', flag: '🇳🇱' },
+                    { id: 'fr', label: 'France', flag: '🇫🇷' },
+                    { id: 'se', label: 'Sweden', flag: '🇸🇪' },
+                    { id: 'nz', label: 'New Zealand', flag: '🇳🇿' },
+                    { id: 'it', label: 'Italy', flag: '🇮🇹' },
+                    { id: 'sg', label: 'Singapore', flag: '🇸🇬' },
+                  ].map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedCountryFilter(c.id)}
+                      className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition active:scale-95 shrink-0 ${
+                        selectedCountryFilter === c.id
+                          ? 'bg-[#0D3B43] text-white shadow-sm'
+                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/70'
+                      }`}
+                    >
+                      <span>{c.flag}</span>
+                      <span>{c.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => scrollCountries('right')}
+                  className="hidden sm:flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0"
+                  title="Scroll countries right"
+                >
+                  <ChevronRight size={14} />
+                </button>
               </div>
 
+              {/* Secondary Filters */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -467,6 +525,7 @@ export default function App() {
               </div>
             </div>
 
+            {/* Destination Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {filteredDestinations.map((dest) => (
                 <div 
