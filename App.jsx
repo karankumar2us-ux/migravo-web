@@ -5,6 +5,72 @@ import {
   Share2, Globe2, X, Landmark, ArrowUpRight, Zap, Loader2
 } from 'lucide-react';
 
+// Lightweight Markdown parser: cleanly handles **bold**, [link](url), and * / - bullet points
+function FormattedMessage({ content }) {
+  const lines = content.split('\n');
+
+  return (
+    <div className="space-y-2 text-xs leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-1" />;
+
+        const isBullet = trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ');
+        const cleanLine = isBullet ? trimmed.replace(/^[\*\-•]\s+/, '') : line;
+
+        const parts = [];
+        let cursor = 0;
+        const regex = /(\*\*.*?\*\*|\[.*?\]\(.*?\))/g;
+        let match;
+
+        while ((match = regex.exec(cleanLine)) !== null) {
+          if (match.index > cursor) {
+            parts.push(cleanLine.substring(cursor, match.index));
+          }
+          const token = match[0];
+          if (token.startsWith('**') && token.endsWith('**')) {
+            parts.push(
+              <strong key={match.index} className="font-extrabold text-[#0D3B43]">
+                {token.slice(2, -2)}
+              </strong>
+            );
+          } else if (token.startsWith('[') && token.includes('](')) {
+            const label = token.slice(1, token.indexOf(']('));
+            const url = token.slice(token.indexOf('](') + 2, -1);
+            parts.push(
+              <a 
+                key={match.index} 
+                href={url} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-[#008779] underline font-bold hover:text-teal-800 inline-flex items-center gap-0.5"
+              >
+                {label}
+              </a>
+            );
+          }
+          cursor = regex.lastIndex;
+        }
+
+        if (cursor < cleanLine.length) {
+          parts.push(cleanLine.substring(cursor));
+        }
+
+        if (isBullet) {
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-1.5">
+              <span className="text-[#008779] font-black text-sm leading-none mt-0.5">•</span>
+              <div className="flex-1">{parts}</div>
+            </div>
+          );
+        }
+
+        return <p key={idx}>{parts}</p>;
+      })}
+    </div>
+  );
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('pathways');
   const [budget, setBudget] = useState('mid');
@@ -145,7 +211,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Scrollable Navigation Pill Bar */}
+        {/* Navigation Tabs */}
         <div className="max-w-6xl mx-auto px-4 flex gap-1.5 overflow-x-auto py-2.5 no-scrollbar border-t border-slate-100">
           {[
             { id: 'pathways', label: 'Country Pathways', icon: Globe2 },
@@ -614,7 +680,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: AI MOBILITY ADVISOR (LIVE GEMINI CHAT) */}
+        {/* TAB 5: AI MOBILITY ADVISOR (LIVE GEMINI CHAT WITH MARKDOWN) */}
         {activeTab === 'advisor' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[560px]">
             <div className="bg-[#0D3B43] text-white p-4 flex items-center justify-between">
@@ -622,7 +688,7 @@ export default function App() {
                 <Sparkles size={18} className="text-[#E5A93C]" />
                 <div>
                   <h3 className="font-extrabold text-sm leading-tight">Migravo AI Mobility Counselor</h3>
-                  <p className="text-[10px] text-teal-200 font-medium">Powered by Gemini 1.5 Flash • Anti-Consultancy</p>
+                  <p className="text-[10px] text-teal-200 font-medium">Powered by Gemini • Anti-Consultancy</p>
                 </div>
               </div>
               <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/30 flex items-center gap-1">
@@ -662,12 +728,16 @@ export default function App() {
             <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
+                  <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed ${
                     m.sender === 'user' 
-                      ? 'bg-[#0D3B43] text-white rounded-br-none shadow-xs' 
+                      ? 'bg-[#0D3B43] text-white rounded-br-none shadow-xs whitespace-pre-wrap' 
                       : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200/80 shadow-xs'
                   }`}>
-                    {m.text}
+                    {m.sender === 'user' ? (
+                      <p>{m.text}</p>
+                    ) : (
+                      <FormattedMessage content={m.text} />
+                    )}
                   </div>
                 </div>
               ))}
