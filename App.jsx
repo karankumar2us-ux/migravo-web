@@ -5,11 +5,14 @@ import {
   Share2, Globe2, X, Landmark, ArrowUpRight, Zap,
   GraduationCap, Search, BookOpen, Download, Printer,
   Headphones, MessageCircle, Mail, HelpCircle, PhoneCall,
-  ShieldCheck, ArrowRight, DollarSign, Briefcase, Clock
+  ShieldCheck, ArrowRight, DollarSign, Calendar, FileEdit
 } from 'lucide-react';
 
 import LoanCalculator from './src/components/LoanCalculator';
 import GlobalVerificationVault from './src/components/GlobalVerificationVault';
+import SopBuilder from './src/components/SopBuilder';
+import VisaSlotTracker from './src/components/VisaSlotTracker';
+import CostOfLivingMatcher from './src/components/CostOfLivingMatcher';
 
 // Comprehensive Global Destination Database
 const DESTINATIONS = [
@@ -207,138 +210,13 @@ const DESTINATIONS = [
   }
 ];
 
-// Public university directory
-const UNIVERSITY_PROGRAMS = [
-  {
-    id: 1,
-    name: 'Technical University of Munich (TUM)',
-    program: 'M.Sc. Informatics / Computer Science',
-    degree: 'Masters',
-    discipline: 'CS & AI',
-    tuition: '€0 Tuition (Semester fee ~€150)',
-    deadline: '31 May (Winter Intake)',
-    language: '100% English',
-    minCgpa: '7.5+ / High Math ECTS',
-    url: 'https://www.tum.de/en/studies/degree-programs/detail/informatics-master-of-science-msc'
-  },
-  {
-    id: 2,
-    name: 'RWTH Aachen University',
-    program: 'M.Sc. Automotive Engineering',
-    degree: 'Masters',
-    discipline: 'Mechanical',
-    tuition: '€0 Tuition (Semester fee ~€300)',
-    deadline: '01 March (Intl Deadlines)',
-    language: '100% English',
-    minCgpa: '7.8+ / GRE recommended',
-    url: 'https://www.rwth-aachen.de/cms/root/studium/vor-dem-studium/studiengaenge/liste-aktuelle-studiengaenge/studiengangbeschreibung/~bkrg/Automotive-Engineering-M-Sc-/'
-  },
-  {
-    id: 3,
-    name: 'TU Berlin (Technical University of Berlin)',
-    program: 'M.Sc. Computer Science / Information Systems',
-    degree: 'Masters',
-    discipline: 'CS & AI',
-    tuition: '€0 Tuition (Semester ticket included)',
-    deadline: '15 June (Winter)',
-    language: '100% English',
-    minCgpa: '7.0+ CGPA',
-    url: 'https://www.tu.berlin/en/studying/degree-programs/master'
-  },
-  {
-    id: 4,
-    name: 'University of Stuttgart',
-    program: 'M.Sc. Computational Mechanics of Materials and Structures',
-    degree: 'Masters',
-    discipline: 'Mechanical',
-    tuition: '€1,500/sem (Baden-Württemberg fee rule)',
-    deadline: '15 February',
-    language: '100% English',
-    minCgpa: '7.5+ in Mechanical/Civil',
-    url: 'https://www.uni-stuttgart.de/en/study/study-programs/master/'
-  },
-  {
-    id: 5,
-    name: 'Saarland University',
-    program: 'M.Sc. Data Science and Artificial Intelligence',
-    degree: 'Masters',
-    discipline: 'CS & AI',
-    tuition: '€0 Tuition (Zero tuition fees)',
-    deadline: '15 May',
-    language: '100% English',
-    minCgpa: 'Max Planck Institute affiliated',
-    url: 'https://saarland-informatics-campus.de/en/computerscience-programs/data-science-and-artificial-intelligence-msc/'
-  },
-  {
-    id: 6,
-    name: 'FAU Erlangen-Nürnberg',
-    program: 'M.Sc. Artificial Intelligence',
-    degree: 'Masters',
-    discipline: 'CS & AI',
-    tuition: '€0 Tuition (Semester contribution ~€72)',
-    deadline: '15 July',
-    language: '100% English',
-    minCgpa: 'Strong Python/Math background',
-    url: 'https://www.fau.eu/education/degree-programmes/master-programmes/artificial-intelligence-msc/'
-  },
-  {
-    id: 7,
-    name: 'TU Dresden',
-    program: 'M.Sc. Nanoelectronic Systems',
-    degree: 'Masters',
-    discipline: 'CoreEngg',
-    tuition: '€0 Tuition (Semester fee only)',
-    deadline: '31 May',
-    language: '100% English',
-    minCgpa: 'ECE / Electrical Bachelor',
-    url: 'https://tu-dresden.de/ing/elektrotechnik/studium/studienangebot/master-studiengaenge/nes'
-  },
-  {
-    id: 8,
-    name: 'TH Köln (University of Applied Sciences)',
-    program: 'B.Eng. Automation & IT (International)',
-    degree: 'Bachelors',
-    discipline: 'CS & AI',
-    tuition: '€0 Tuition',
-    deadline: '15 July',
-    language: 'Bilingual / English track',
-    minCgpa: '12th Grade 75%+ or Studienkolleg',
-    url: 'https://www.th-koeln.de/en/'
-  }
-];
-
-const FAQS = [
-  {
-    q: "Can I study abroad without paying ₹50,000+ consultancy charges?",
-    a: "Yes. All university admissions, visa applications (VFS/CEAC/IRCC), blocked accounts, and education loans are handled directly on official government portals. Consultancies often push high-commission private colleges rather than low-cost public institutions."
-  },
-  {
-    q: "How does the post-study work visa differ across countries?",
-    a: "The US gives 36 months for STEM degrees (STEM OPT). Germany provides 18 months, Canada offers up to 3 years (PGWP), Australia grants 2 to 4 years (Subclass 485), and the UK gives 2 years under the Graduate Route."
-  },
-  {
-    q: "What is an Education Loan Sanction Letter and when is it required?",
-    a: "It is a formal commitment from an Indian bank (like SBI or HDFC Credila) confirming your sanctioned loan amount. It acts as valid financial proof for obtaining your I-20 (USA), Blocked Account (Germany), or Student Visa (Canada/UK/Australia)."
-  },
-  {
-    q: "Do I get full tax deductions on education loan interest in India?",
-    a: "Yes. Under Section 80E of the Indian Income Tax Act, 100% of the interest repaid on higher education loans is deductible from gross taxable income for up to 8 continuous years without any upper limit."
-  }
-];
-
 export default function App() {
   const [activeTab, setActiveTab] = useState('pathways');
   const [selectedCountryFilter, setSelectedCountryFilter] = useState('all');
   const [budgetFilter, setBudgetFilter] = useState('all');
   const [fieldFilter, setFieldFilter] = useState('all');
-
   const [userName, setUserName] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
-
-  // University Finder Filter State
-  const [uniSearch, setUniSearch] = useState('');
-  const [uniDegreeFilter, setUniDegreeFilter] = useState('All');
-  const [uniDisciplineFilter, setUniDisciplineFilter] = useState('All');
 
   // Customer Support Form State
   const [supportName, setSupportName] = useState('');
@@ -365,7 +243,6 @@ export default function App() {
   const completedCount = checklist.filter(c => c.done).length;
   const readinessPercent = Math.round((completedCount / checklist.length) * 100);
 
-  // Filtered Country Destinations
   const filteredDestinations = DESTINATIONS.filter(item => {
     const matchesCountry = selectedCountryFilter === 'all' || item.id === selectedCountryFilter;
     const matchesBudget = budgetFilter === 'all' || item.budgetTier === budgetFilter;
@@ -376,7 +253,7 @@ export default function App() {
   const handleWhatsAppShare = () => {
     const candidateName = userName.trim() ? `${userName.trim()}'s` : "My";
     const text = encodeURIComponent(
-      `✈️ ${candidateName} Global Mobility Evaluation on Migravo:\n🎯 Readiness Score: ${readinessPercent}%\n🌍 Transparent Anti-Broker Guide\nCheck your score without consultant fees: https://migravo-web.vercel.app`
+      `✈️ ${candidateName} Global Mobility Evaluation on Migravo:\n🎯 Readiness Score: ${readinessPercent}%\n🌍 Zero-Broker Direct Admissions Guide\nCheck your score without consultant fees: https://migravo-web.vercel.app`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -395,75 +272,6 @@ export default function App() {
     const body = encodeURIComponent(`Name: ${name}\nReadiness: ${readinessPercent}%\nQuery:\n${query}`);
     window.location.href = `mailto:support@migravo.in?subject=${subject}&body=${body}`;
   };
-
-  const handleDownloadPDF = () => {
-    const printWindow = window.open('', '_blank');
-    const name = userName.trim() || 'Global Mobility Candidate';
-    
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Migravo Relocation Dossier - ${name}</title>
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; }
-          .header { border-bottom: 3px solid #008779; padding-bottom: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
-          .title { font-size: 24px; font-weight: 800; color: #0D3B43; margin: 0; }
-          .subtitle { font-size: 13px; color: #64748b; margin-top: 5px; }
-          .badge { background: #008779; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 12px; }
-          .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px; }
-          .card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; background: #f8fafc; }
-          .card-title { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; }
-          .card-val { font-size: 22px; font-weight: 800; color: #0D3B43; margin-top: 5px; }
-          .section-title { font-size: 16px; font-weight: 800; color: #0D3B43; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-top: 25px; margin-bottom: 12px; }
-          ul { list-style: none; padding: 0; margin: 0; }
-          li { padding: 6px 0; font-size: 13px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; }
-          .status-done { color: #059669; font-weight: bold; }
-          .status-pending { color: #d97706; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <h1 class="title">MIGRAVO GLOBAL MOBILITY DOSSIER</h1>
-            <p class="subtitle">Zero-Consultancy Applicant Relocation Audit</p>
-          </div>
-          <span class="badge">Verified Candidate</span>
-        </div>
-        <p><strong>Candidate Name:</strong> ${name}</p>
-        <div class="grid">
-          <div class="card">
-            <div class="card-title">Relocation Readiness</div>
-            <div class="card-val">${readinessPercent}%</div>
-            <p style="font-size: 11px; color: #64748b;">${completedCount} of 10 Milestones Verified</p>
-          </div>
-        </div>
-        <div class="section-title">Milestone Roadmap Progress</div>
-        <ul>
-          ${checklist.map(item => `
-            <li>
-              <span>${item.title} (${item.phase})</span>
-              <span class="${item.done ? 'status-done' : 'status-pending'}">
-                ${item.done ? '✓ COMPLETED' : '○ PENDING'}
-              </span>
-            </li>
-          `).join('')}
-        </ul>
-        <script>window.onload = function() { window.print(); }</script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
-  const filteredUniversities = UNIVERSITY_PROGRAMS.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(uniSearch.toLowerCase()) || 
-                          item.program.toLowerCase().includes(uniSearch.toLowerCase()) ||
-                          item.discipline.toLowerCase().includes(uniSearch.toLowerCase());
-    const matchesDegree = uniDegreeFilter === 'All' || item.degree === uniDegreeFilter;
-    const matchesDiscipline = uniDisciplineFilter === 'All' || item.discipline === uniDisciplineFilter;
-    return matchesSearch && matchesDegree && matchesDiscipline;
-  });
 
   return (
     <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans antialiased pb-24 selection:bg-[#008779] selection:text-white">
@@ -498,15 +306,6 @@ export default function App() {
             </button>
 
             <button 
-              onClick={handleDownloadPDF}
-              className="hidden md:flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 transition"
-              title="Download Relocation Summary PDF"
-            >
-              <Download size={13} className="text-[#008779]" />
-              <span>Export Dossier</span>
-            </button>
-
-            <button 
               onClick={() => setShowShareModal(true)}
               className="bg-[#0D3B43] hover:bg-[#09262C] text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-sm transition active:scale-95"
             >
@@ -516,30 +315,33 @@ export default function App() {
           </div>
         </div>
 
-        {/* Global Navigation Tabs */}
+        {/* Modular Navigation Tabs */}
         <div className="border-t border-slate-100 bg-white">
           <div className="max-w-6xl mx-auto px-4 flex items-center">
             <div className="flex gap-2 overflow-x-auto py-2.5 w-full scroll-smooth no-scrollbar">
               {[
-                { id: 'pathways', label: '🌍 Global Country Pathways' },
-                { id: 'loans', label: '💰 Education Loan & Tax Calc' },
-                { id: 'aps', label: '🛡️ Credential & APS Vault' },
-                { id: 'unifinder', label: '🎓 Public University Directory' },
-                { id: 'scholarships', label: '📜 Govt Scholarships' },
-                { id: 'checklist', label: '🗺️ Relocation Roadmap' },
-                { id: 'support', label: '🎧 Student Support Desk' },
+                { id: 'pathways', label: '🌍 Global Pathways', icon: Globe2 },
+                { id: 'loans', label: '💰 Education Loan & 80E', icon: Landmark },
+                { id: 'aps', label: '🛡️ Credential Vault (APS/WES)', icon: ShieldCheck },
+                { id: 'sop', label: '✍️ SOP & LOR Builder', icon: FileEdit },
+                { id: 'visa', label: '📅 Visa & VFS Tracker', icon: Calendar },
+                { id: 'living', label: '🏙️ City Cost & Earnings', icon: DollarSign },
+                { id: 'checklist', label: '🗺️ Relocation Roadmap', icon: CheckSquare },
+                { id: 'support', label: '🎧 Student Support Desk', icon: Headphones },
               ].map(tab => {
+                const Icon = tab.icon;
                 const active = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all duration-200 ${
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all duration-200 ${
                       active 
                         ? 'bg-[#0D3B43] text-white shadow-md shadow-[#0D3B43]/20 scale-[1.02]' 
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60'
                     }`}
                   >
+                    <Icon size={13} className={active ? 'text-[#E5A93C]' : 'text-slate-400'} />
                     {tab.label}
                   </button>
                 );
@@ -549,10 +351,10 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Container */}
+      {/* Main Content Area */}
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
-        {/* Hero Banner */}
+        {/* Global Hero Banner */}
         <section className="bg-gradient-to-br from-[#0D3B43] via-[#0E535D] to-[#008779] text-white p-6 sm:p-8 rounded-3xl shadow-xl shadow-[#0D3B43]/15 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-xl">
             <span className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-bold text-[#E5A93C] border border-white/15">
@@ -562,7 +364,7 @@ export default function App() {
               Global Study & Relocation Pathways.
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-              Standardized, transparent criteria across the USA, Germany, UK, Canada, Australia, Ireland, Netherlands, France, Sweden, NZ, Italy, and Singapore.
+              Standardized, verified criteria across top destinations. Prepare your entire dossier without agent markups.
             </p>
           </div>
 
@@ -581,7 +383,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* TAB 1: GLOBAL COUNTRY PATHWAYS */}
+        {/* TAB 1: GLOBAL DESTINATIONS */}
         {activeTab === 'pathways' && (
           <div className="space-y-5">
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
@@ -629,7 +431,6 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Secondary Filters */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -666,7 +467,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Destination Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {filteredDestinations.map((dest) => (
                 <div 
@@ -748,160 +548,16 @@ export default function App() {
         {/* TAB 3: CREDENTIAL & APS VAULT */}
         {activeTab === 'aps' && <GlobalVerificationVault />}
 
-        {/* TAB 4: PUBLIC UNIVERSITY FINDER */}
-        {activeTab === 'unifinder' && (
-          <div className="space-y-5">
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div>
-                  <h2 className="text-base font-extrabold text-[#0D3B43] flex items-center gap-2">
-                    <GraduationCap className="text-[#008779] w-5 h-5" /> 
-                    Public University €0-Tuition Course Directory
-                  </h2>
-                  <p className="text-xs text-slate-500 font-medium">
-                    100% English-taught degree programs at premier German public institutions
-                  </p>
-                </div>
-                <span className="text-xs font-bold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 self-start sm:self-auto">
-                  {filteredUniversities.length} Programs Found
-                </span>
-              </div>
+        {/* TAB 4: SOP & LOR BUILDER */}
+        {activeTab === 'sop' && <SopBuilder />}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="relative">
-                  <Search size={14} className="absolute left-3.5 top-3 text-slate-400" />
-                  <input 
-                    type="text"
-                    value={uniSearch}
-                    onChange={(e) => setUniSearch(e.target.value)}
-                    placeholder="Search university or course name..."
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779]"
-                  />
-                </div>
+        {/* TAB 5: VISA & VFS SLOT TRACKER */}
+        {activeTab === 'visa' && <VisaSlotTracker />}
 
-                <div>
-                  <select
-                    value={uniDegreeFilter}
-                    onChange={(e) => setUniDegreeFilter(e.target.value)}
-                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779] cursor-pointer"
-                  >
-                    <option value="All">All Degrees (Masters & Bachelors)</option>
-                    <option value="Masters">Masters Programs (M.Sc.)</option>
-                    <option value="Bachelors">Bachelors Programs (B.Sc./B.Eng.)</option>
-                  </select>
-                </div>
+        {/* TAB 6: CITY COST & EARNING MATCHER */}
+        {activeTab === 'living' && <CostOfLivingMatcher />}
 
-                <div>
-                  <select
-                    value={uniDisciplineFilter}
-                    onChange={(e) => setUniDisciplineFilter(e.target.value)}
-                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 text-xs rounded-xl font-semibold outline-none focus:border-[#008779] cursor-pointer"
-                  >
-                    <option value="All">All Disciplines</option>
-                    <option value="CS & AI">Computer Science, AI & Data</option>
-                    <option value="Mechanical">Mechanical & Automotive</option>
-                    <option value="CoreEngg">Electrical & Electronics</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredUniversities.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] font-bold text-[#008779] bg-teal-50 px-2 py-0.5 rounded uppercase tracking-wider">
-                          {item.degree} • {item.discipline}
-                        </span>
-                        <h3 className="font-extrabold text-slate-900 text-sm mt-1.5 leading-snug">{item.name}</h3>
-                        <p className="text-xs font-semibold text-slate-600">{item.program}</p>
-                      </div>
-                      <span className="bg-emerald-100/80 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">
-                        {item.language}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-2.5 rounded-xl text-xs">
-                      <div>
-                        <span className="text-slate-400 text-[10px] block">Tuition Fee</span>
-                        <span className="font-bold text-emerald-600">{item.tuition}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 text-[10px] block">Application Deadline</span>
-                        <span className="font-semibold text-slate-800">{item.deadline}</span>
-                      </div>
-                      <div className="col-span-2">
-                        <span className="text-slate-400 text-[10px] block">Academic Eligibility Benchmark</span>
-                        <span className="font-semibold text-slate-700">{item.minCgpa}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-slate-400 font-medium">Apply via Uni-Assist / Direct</span>
-                    <a 
-                      href={item.url} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="bg-[#0D3B43] hover:bg-[#09262C] text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition active:scale-95"
-                    >
-                      Official Program Page <ExternalLink size={12} />
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 5: SCHOLARSHIPS */}
-        {activeTab === 'scholarships' && (
-          <div className="space-y-4">
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
-              <h2 className="text-base font-extrabold text-[#0D3B43]">Government & Trust Grants for Indian Students</h2>
-              <p className="text-xs text-slate-500 font-medium">Direct links to official application portals without agent middlemen</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { title: 'National Overseas Scholarship (NOS)', provider: 'Govt of India (Social Justice)', award: '100% Tuition + Living Stipend + Flights', deadline: 'March - April Annual', link: 'https://www.dosje.gov.in/organisation/national-overseas-scholarship/' },
-                { title: 'Inlaks Shivdasani Foundation', provider: 'Inlaks Foundation', award: 'Up to $100,000 for Masters (US, UK, Europe)', deadline: 'February - March', link: 'https://www.inlaksfoundation.org/' },
-                { title: 'J.N. Tata Endowment Loan Scholarship', provider: 'Tata Trusts', award: '₹1 Lakh to ₹10 Lakhs + Gift Grant', deadline: 'December - March', link: 'https://www.jntataendowment.org/' },
-                { title: 'Fulbright-Nehru Master’s Fellowships', provider: 'USIEF (US - India)', award: 'Full Tuition, J-1 Visa, Stipend & Travel', deadline: 'May Annual Cycle', link: 'https://www.usief.org.in/' },
-                { title: 'DAAD Scholarships (Germany)', provider: 'German Academic Exchange Service', award: '€934/month living stipend + Health Insurance', deadline: 'Varies by University Program', link: 'https://www.daad.de/en/' },
-                { title: 'Chevening Scholarships (UK)', provider: 'UK Foreign & Commonwealth Office', award: '100% Tuition, Monthly Allowance & Flights', deadline: 'August - November', link: 'https://www.chevening.org/' },
-              ].map((s, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-3">
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm">{s.title}</h3>
-                    <p className="text-xs text-slate-400 font-medium">{s.provider}</p>
-                    <div className="mt-2.5 bg-emerald-50 text-emerald-800 text-xs font-semibold p-2.5 rounded-xl border border-emerald-100">
-                      {s.award}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-                    <span className="text-slate-400 font-medium">Deadline: {s.deadline}</span>
-                    <a 
-                      href={s.link} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-[#008779] font-bold hover:underline flex items-center gap-1"
-                    >
-                      Apply on Portal <ExternalLink size={12} />
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 6: RELOCATION ROADMAP */}
+        {/* TAB 7: RELOCATION ROADMAP */}
         {activeTab === 'checklist' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-2">
@@ -946,7 +602,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 7: STUDENT SUPPORT DESK */}
+        {/* TAB 8: STUDENT SUPPORT DESK */}
         {activeTab === 'support' && (
           <div className="space-y-6">
             <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-6">
@@ -1003,21 +659,6 @@ export default function App() {
                   >
                     <Mail size={15} /> Email Support (support@migravo.in)
                   </button>
-                </div>
-              </div>
-
-              {/* FAQ Accordion */}
-              <div className="border-t border-slate-100 pt-5 space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <HelpCircle size={14} /> Frequently Asked Questions
-                </h3>
-                <div className="space-y-2">
-                  {FAQS.map((faq, i) => (
-                    <div key={i} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/70 space-y-1">
-                      <p className="font-bold text-xs text-slate-900">{faq.q}</p>
-                      <p className="text-xs text-slate-600 leading-relaxed">{faq.a}</p>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
@@ -1086,12 +727,6 @@ export default function App() {
                   className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition active:scale-95"
                 >
                   <Share2 size={14} /> Share on WhatsApp
-                </button>
-                <button 
-                  onClick={handleDownloadPDF}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5"
-                >
-                  <Download size={14} /> Dossier PDF
                 </button>
               </div>
             </div>
