@@ -253,11 +253,17 @@ export default function App() {
     }
   }, [messages, isLoadingAi, activeTab]);
 
+  // Real-Time Streaming Send Query Handler
   const sendQuery = async (text) => {
     const query = text || inputMsg;
     if (!query.trim() || isLoadingAi) return;
 
-    setMessages(prev => [...prev, { sender: 'user', text: query }]);
+    // Push the user query and an empty bubble for the AI stream to write into
+    setMessages(prev => [
+      ...prev, 
+      { sender: 'user', text: query },
+      { sender: 'ai', text: '' }
+    ]);
     setInputMsg('');
     setIsLoadingAi(true);
 
@@ -268,20 +274,39 @@ export default function App() {
         body: JSON.stringify({ message: query })
       });
 
-      const data = await res.json();
-      if (res.ok && data.reply) {
-        setMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
-      } else {
-        setMessages(prev => [...prev, { 
-          sender: 'ai', 
-          text: `⚠️ ${data.error || 'Unable to connect to AI Counselor. Please make sure your GEMINI_API_KEY is configured in Vercel settings.'}` 
-        }]);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to connect to AI Counselor');
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          updated[lastIdx] = {
+            ...updated[lastIdx],
+            text: updated[lastIdx].text + chunk
+          };
+          return updated;
+        });
       }
     } catch (err) {
-      setMessages(prev => [...prev, { 
-        sender: 'ai', 
-        text: '⚠️ Network connection issue. Please check your connection and try again.' 
-      }]);
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        updated[lastIdx] = {
+          ...updated[lastIdx],
+          text: `⚠️ ${err.message || 'Network connection issue. Please check your connection and try again.'}`
+        };
+        return updated;
+      });
     } finally {
       setIsLoadingAi(false);
     }
@@ -641,7 +666,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: €0 PUBLIC UNIVERSITY & COURSE FINDER (NEW) */}
+        {/* TAB 2: €0 PUBLIC UNIVERSITY & COURSE FINDER */}
         {activeTab === 'unifinder' && (
           <div className="space-y-5">
             {/* Filter Bar */}
@@ -927,7 +952,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 6: AI MOBILITY ADVISOR (LIVE GEMINI WITH AUTO-SCROLL) */}
+        {/* TAB 6: AI MOBILITY ADVISOR (LIVE GEMINI WITH REAL-TIME STREAMING) */}
         {activeTab === 'advisor' && (
           <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[580px]">
             <div className="bg-[#0D3B43] text-white p-4 flex items-center justify-between">
@@ -939,7 +964,7 @@ export default function App() {
                 </div>
               </div>
               <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live API
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Streaming Active
               </span>
             </div>
 
@@ -982,20 +1007,18 @@ export default function App() {
                   }`}>
                     {m.sender === 'user' ? (
                       <p>{m.text}</p>
-                    ) : (
+                    ) : m.text ? (
                       <FormattedMessage content={m.text} />
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-slate-400 py-0.5">
+                        <span className="w-1.5 h-1.5 bg-[#008779] rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                        <span className="w-1.5 h-1.5 bg-[#008779] rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                        <span className="w-1.5 h-1.5 bg-[#008779] rounded-full animate-bounce"></span>
+                      </div>
                     )}
                   </div>
                 </div>
               ))}
-              {isLoadingAi && (
-                <div className="flex justify-start">
-                  <div className="bg-slate-100 border border-slate-200/80 text-slate-500 rounded-2xl rounded-bl-none p-3.5 text-xs flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-[#008779]" />
-                    <span>Migravo Counselor is formulating response...</span>
-                  </div>
-                </div>
-              )}
               {/* Invisible anchor for automatic scrolling */}
               <div ref={messagesEndRef} />
             </div>
@@ -1079,7 +1102,7 @@ export default function App() {
                   </div>
                   <div className="bg-white/10 p-2.5 rounded-xl">
                     <span className="text-teal-200 block text-[10px] font-medium">Planned Budget</span>
-                    <span className="text-xs font-bold text-white">{budget === 'low' ? '< ₹15 Lakhs' : budget === 'mid' ? '₹15L - ₹35L' : '₹35L+'}</span>
+                    <span className="text-xs font-bold text-white">{budget === 'low' ? '< ₹15 Lakhs' : budget === 'mid' ? '₹15L - ₹35L' : '₹35L+'}`</span>
                   </div>
                 </div>
 
