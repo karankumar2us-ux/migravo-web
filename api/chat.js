@@ -1,39 +1,35 @@
-export const config = {
-  runtime: 'edge',
-};
+export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-export default async function handler(req) {
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { message, history } = await req.json();
+    const { message, history } = req.body || {};
     if (!message || typeof message !== 'string') {
-      return new Response(JSON.stringify({ error: 'Message is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(400).json({ error: 'Message is required' });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY is not configured in Vercel settings.' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in Vercel settings.' });
     }
 
     const systemPrompt = `You are the Migravo AI Counselor, an authoritative, zero-consultancy study abroad and global relocation advisor for Indian students.
 Your core mission: Help students apply directly to top public universities (especially €0 tuition in Germany, 3-year STEM OPT in USA, Canadian DLIs, and Australian PR) without paying ₹50,000+ to consultancies.
 Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs or clear bullet points.`;
 
+    // Build properly alternating multi-turn history: user -> model
     const contents = [];
 
-    // Strictly alternate roles: user -> model -> user -> model
     if (Array.isArray(history)) {
       let expectedRole = 'user';
       for (const turn of history.slice(-4)) {
@@ -43,7 +39,7 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
         if (currentRole === expectedRole) {
           contents.push({
             role: currentRole,
-            parts: [{ text: turn.text.trim() }],
+            parts: [{ text: turn.text.trim() }]
           });
           expectedRole = expectedRole === 'user' ? 'model' : 'user';
         } else if (contents.length > 0 && currentRole === 'user' && expectedRole === 'model') {
@@ -58,82 +54,45 @@ Be direct, concise, factual, and helpful. Keep responses to 2 crisp paragraphs o
 
     contents.push({
       role: 'user',
-      parts: [{ text: message.trim() }],
+      parts: [{ text: message.trim() }]
     });
 
-    // Extended 25s timeout to allow full edge-to-cluster handshake
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
-
+    // Fast direct request with thinkingBudget set to 0 to avoid delays
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: systemPrompt }],
+            parts: [{ text: systemPrompt }]
           },
           contents,
           generationConfig: {
             maxOutputTokens: 400,
-          },
-        }),
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
+          }
+        })
       }
     );
-
-    clearTimeout(timeoutId);
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      return new Response(JSON.stringify({ error: `Gemini API error (${geminiRes.status}): ${errText}` }), {
-        status: geminiRes.status,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      let friendlyError = 'Google API error';
+      try {
+        const parsed = JSON.parse(errText);
+        friendlyError = parsed.error?.message || errText;
+      } catch {}
+      return res.status(geminiRes.status).json({ error: friendlyError });
     }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+    const data = await geminiRes.json();
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
+    return res.status(200).json({ reply });
 
-    const transformStream = new TransformStream({
-      transform(chunk, controller) {
-        const text = decoder.decode(chunk);
-        const lines = text.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              const token = data.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (token) {
-                controller.enqueue(encoder.encode(token));
-              }
-            } catch {
-              // Ignore incomplete frame chunks
-            }
-          }
-        }
-      },
-    });
-
-    return new Response(geminiRes.body.pipeThrough(transformStream), {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
-      },
-    });
   } catch (err) {
-    const isTimeout = err.name === 'AbortError';
-    return new Response(
-      JSON.stringify({
-        error: isTimeout
-          ? 'Connection took longer than 25s. Google API is experiencing latency.'
-          : err.message || 'Internal server error',
-      }),
-      {
-        status: 504,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return res.status(500).json({ error: err.message || 'Internal server error' });
   }
 }
